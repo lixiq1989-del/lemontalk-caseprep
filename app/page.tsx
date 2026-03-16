@@ -1,65 +1,104 @@
-import Image from "next/image";
+import Link from "next/link";
+
+const features = [
+  {
+    href: "/partner",
+    icon: "🤝",
+    title: "Case Partner",
+    desc: "找到最合适的Case练习搭档，按水平、时间、目标公司智能匹配",
+    color: "bg-blue-50 border-blue-200",
+    iconBg: "bg-blue-100",
+  },
+  {
+    href: "/casebook",
+    icon: "📚",
+    title: "题库",
+    desc: "精选Casebook题目，覆盖MBB/Big4常见Case类型，中英双语",
+    color: "bg-green-50 border-green-200",
+    iconBg: "bg-green-100",
+  },
+  {
+    href: "/community",
+    icon: "💬",
+    title: "社区",
+    desc: "面经分享、经验交流、求助讨论，和同路人一起准备",
+    color: "bg-purple-50 border-purple-200",
+    iconBg: "bg-purple-100",
+  },
+  {
+    href: "/ai",
+    icon: "🤖",
+    title: "AI 助手",
+    desc: "AI模拟面试、Case框架问答、面试小抄速查",
+    color: "bg-amber-50 border-amber-200",
+    iconBg: "bg-amber-100",
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div>
+      {/* Hero */}
+      <div className="text-center py-12">
+        <h1 className="text-4xl font-bold mb-3">
+          <span className="text-primary">LemonTalk</span> CasePrep
+        </h1>
+        <p className="text-lg text-muted max-w-xl mx-auto">
+          咨询面试一站式准备平台 — 找搭档、刷题库、看面经、AI练习
+        </p>
+        <div className="mt-6 flex justify-center gap-3">
+          <Link
+            href="/partner"
+            className="px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            开始匹配
+          </Link>
+          <Link
+            href="/casebook"
+            className="px-5 py-2.5 border border-border rounded-lg font-medium hover:bg-gray-50 transition-colors"
           >
-            Documentation
-          </a>
+            浏览题库
+          </Link>
         </div>
-      </main>
+      </div>
+
+      {/* Feature Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        {features.map((f) => (
+          <Link
+            key={f.href}
+            href={f.href}
+            className={`card-hover border rounded-xl p-6 ${f.color} block`}
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className={`w-12 h-12 rounded-xl ${f.iconBg} flex items-center justify-center text-2xl shrink-0`}
+              >
+                {f.icon}
+              </div>
+              <div>
+                <h2 className="font-semibold text-lg">{f.title}</h2>
+                <p className="text-muted text-sm mt-1">{f.desc}</p>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-4 mt-12 text-center">
+        {[
+          { n: "120+", l: "题库Case" },
+          { n: "500+", l: "活跃用户" },
+          { n: "2000+", l: "练习场次" },
+          { n: "95%", l: "好评率" },
+        ].map((s) => (
+          <div key={s.l} className="py-4">
+            <div className="text-2xl font-bold text-primary">{s.n}</div>
+            <div className="text-sm text-muted mt-1">{s.l}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
