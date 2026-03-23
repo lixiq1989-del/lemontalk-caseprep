@@ -31,6 +31,9 @@ export interface CaseSections {
   recommendation?: string;
   tips?: string;
   deep_analysis?: string;
+  issue_tree_img?: string;
+  exhibit1_img?: string;
+  exhibit2_img?: string;
 }
 
 export interface Case {

@@ -13,6 +13,9 @@ interface CaseSections {
   recommendation?: string;
   tips?: string;
   deep_analysis?: string;
+  issue_tree_img?: string;
+  exhibit1_img?: string;
+  exhibit2_img?: string;
 }
 
 interface CaseDetail {
@@ -120,17 +123,19 @@ export default function CaseDetailPage() {
   }
 
   const sec = caseData.sections || {};
-  const studySections: { title: string; body: string; key: string }[] = [];
+  const studySections: { title: string; body: string; key: string }[] = [] as { title: string; body: string; key: string }[];
   if (sec.clarifying) studySections.push({ key: "clarifying", title: "澄清信息 Clarifying Info", body: sec.clarifying });
   if (sec.framework) studySections.push({ key: "framework", title: "分析框架 Framework", body: sec.framework });
-  if (sec.exhibit1) studySections.push({ key: "exhibit1", title: "Exhibit #1 — 数据分析", body: sec.exhibit1 });
-  if (sec.exhibit2) studySections.push({ key: "exhibit2", title: "Exhibit #2 — 方案对比", body: sec.exhibit2 });
+  if (sec.exhibit1 || sec.exhibit1_img) studySections.push({ key: "exhibit1", title: "Exhibit #1 — 数据分析", body: sec.exhibit1 || "" });
+  if (sec.exhibit2 || sec.exhibit2_img) studySections.push({ key: "exhibit2", title: "Exhibit #2 — 方案对比", body: sec.exhibit2 || "" });
   if (sec.qa) studySections.push({ key: "qa", title: "问题与回答 Q&A", body: sec.qa });
   if (sec.recommendation) studySections.push({ key: "recommendation", title: "建议 Recommendation", body: sec.recommendation });
   if (sec.tips) studySections.push({ key: "tips", title: "面试技巧 Tips", body: sec.tips });
   if (sec.deep_analysis) studySections.push({ key: "deep_analysis", title: "深度分析", body: sec.deep_analysis });
   // Fallback to content parsing if no sections
-  const contentSections = studySections.length > 0 ? studySections : parseContent(caseData.content);
+  const contentSections = studySections.length > 0
+    ? studySections
+    : parseContent(caseData.content).map((s, i) => ({ ...s, key: `section_${i}` }));
 
   // Full view mode (traditional)
   if (showFullMode) {
@@ -324,6 +329,14 @@ export default function CaseDetailPage() {
             </div>
           )}
 
+          {/* Issue Tree Image */}
+          {sec.issue_tree_img && (
+            <div className="border border-green-200 rounded-xl p-4 bg-green-50">
+              <h2 className="text-sm font-semibold text-green-700 mb-3">Issue Tree</h2>
+              <img src={sec.issue_tree_img} alt="Issue Tree" className="w-full rounded-lg" />
+            </div>
+          )}
+
           <div className="border border-green-200 rounded-xl p-6 bg-green-50">
             <h2 className="text-sm font-semibold text-green-700 mb-3">参考框架</h2>
             <div className="text-sm leading-relaxed whitespace-pre-wrap text-green-900">
@@ -369,7 +382,17 @@ export default function CaseDetailPage() {
       {phase === "analysis" && (
         <div className="space-y-4">
           {contentSections.map((section, i) => (
-            <CollapsibleSection key={i} title={section.title} body={section.body} defaultOpen={i === 0} />
+            <CollapsibleSection
+              key={i}
+              title={section.title}
+              body={section.body}
+              defaultOpen={i === 0}
+              image={
+                section.key === "exhibit1" ? sec.exhibit1_img :
+                section.key === "exhibit2" ? sec.exhibit2_img :
+                undefined
+              }
+            />
           ))}
 
           <div className="flex gap-3">
@@ -453,7 +476,7 @@ export default function CaseDetailPage() {
 }
 
 // Collapsible section component
-function CollapsibleSection({ title, body, defaultOpen }: { title: string; body: string; defaultOpen?: boolean }) {
+function CollapsibleSection({ title, body, defaultOpen, image }: { title: string; body: string; defaultOpen?: boolean; image?: string }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
 
   return (
@@ -469,6 +492,9 @@ function CollapsibleSection({ title, body, defaultOpen }: { title: string; body:
       </button>
       {open && (
         <div className="px-5 pb-4 border-t border-border">
+          {image && (
+            <img src={image} alt={title} className="w-full rounded-lg mt-3 mb-3" />
+          )}
           <div className="text-sm leading-relaxed whitespace-pre-wrap pt-3">
             {body}
           </div>
