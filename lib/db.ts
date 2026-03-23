@@ -244,6 +244,87 @@ for (const c of SEED_CASES_DATA) {
   });
 }
 
+// Seed students (realistic demo data with weekly availability grids)
+const SEED_STUDENTS_DATA: Omit<Student, "id" | "created_at" | "updated_at" | "active" | "avatar">[] = [
+  {
+    name: "Alice Wang",
+    wechat: "alice_w2026",
+    school: "北京大学光华",
+    target_firms: ["MBB", "Big4"],
+    case_types: ["Profitability", "Market Entry", "M&A"],
+    availability: ["mon_evening", "wed_evening", "fri_evening", "sat_morning", "sat_afternoon", "sun_morning"],
+    level: "advanced",
+    language: "Both",
+    bio: "光华金融本科，已拿到McKinsey superday。练了50+个case，擅长profitability和M&A。希望找高级水平的partner一起冲刺。",
+  },
+  {
+    name: "Kevin Chen",
+    wechat: "kevin_c_case",
+    school: "清华经管",
+    target_firms: ["MBB", "Boutique"],
+    case_types: ["Market Sizing", "Profitability", "Growth Strategy"],
+    availability: ["tue_evening", "thu_evening", "sat_morning", "sat_afternoon", "sat_evening", "sun_afternoon"],
+    level: "intermediate",
+    language: "中文",
+    bio: "经管大三，目标McKinsey暑期实习。已练30个case，market sizing比较强，想多练profit和growth。",
+  },
+  {
+    name: "Sophie Li",
+    wechat: "sophie_consulting",
+    school: "LSE",
+    target_firms: ["MBB", "Big4"],
+    case_types: ["Market Entry", "Pricing", "Growth Strategy"],
+    availability: ["mon_morning", "tue_morning", "wed_morning", "thu_morning", "fri_morning", "sun_evening"],
+    level: "intermediate",
+    language: "English",
+    bio: "LSE Management硕士在读，伦敦时间上午比较自由。偏好英文case练习，可以模拟London office风格。",
+  },
+  {
+    name: "张明",
+    wechat: "zhangming_biz",
+    school: "复旦管院",
+    target_firms: ["Big4", "Internal Strategy"],
+    case_types: ["Profitability", "Operations", "Market Sizing"],
+    availability: ["mon_evening", "tue_evening", "wed_evening", "thu_evening", "sat_morning", "sun_morning", "sun_afternoon"],
+    level: "beginner",
+    language: "中文",
+    bio: "刚开始准备case interview，已经看完了Victor Cheng的书。希望找一个耐心的partner从基础开始练起，每周2-3次。",
+  },
+  {
+    name: "Emily Zhang",
+    wechat: "emily_z_mbb",
+    school: "INSEAD",
+    target_firms: ["MBB"],
+    case_types: ["M&A", "Market Entry", "Pricing", "Growth Strategy"],
+    availability: ["mon_afternoon", "wed_afternoon", "fri_afternoon", "sat_evening", "sun_morning", "sun_afternoon"],
+    level: "advanced",
+    language: "Both",
+    bio: "INSEAD MBA在读，之前在PE工作3年。Case基础扎实，尤其擅长M&A估值和market entry。寻找同样高强度备战的partner。",
+  },
+  {
+    name: "Ryan Liu",
+    wechat: "ryan_case2026",
+    school: "上海交大安泰",
+    target_firms: ["MBB", "Boutique"],
+    case_types: ["Profitability", "Market Sizing", "Pricing"],
+    availability: ["wed_evening", "fri_evening", "sat_morning", "sat_afternoon", "sun_morning", "sun_afternoon", "sun_evening"],
+    level: "intermediate",
+    language: "Both",
+    bio: "交大金融本科+辅修数学。计算能力强，想多练qualitative的部分。周末时间很灵活，可以多练几轮。",
+  },
+];
+
+for (const s of SEED_STUDENTS_DATA) {
+  store.students.push({
+    id: store._nextId.students++,
+    ...s,
+    avatar: "",
+    active: 1,
+    created_at: now(),
+    updated_at: now(),
+  });
+}
+
 // Seed posts
 const SEED_POSTS_DATA: { title: string; content: string; category: string; tags: string[] }[] = [
   {
