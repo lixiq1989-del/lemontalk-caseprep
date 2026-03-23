@@ -66,6 +66,7 @@ export default function SprintPage() {
   const [resumeText, setResumeText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
   const [result, setResult] = useState<{ data: CheatsheetData; company: string; role: string } | null>(null);
 
   const canGenerate = (company || role) && (jd || resumeText);
@@ -292,12 +293,47 @@ export default function SprintPage() {
         </div>
 
         <div className="border border-border rounded-xl p-6 bg-white">
-          <h2 className="font-semibold text-sm mb-4">📄 你的简历</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-sm">📄 你的简历</h2>
+            <label className="cursor-pointer text-xs px-3 py-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors">
+              上传文件
+              <input
+                type="file"
+                accept=".pdf,.docx,.doc,.txt"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setUploadStatus("解析中...");
+                  try {
+                    const fd = new FormData();
+                    fd.append("file", file);
+                    const res = await fetch("/api/parse-resume", { method: "POST", body: fd });
+                    const data = await res.json();
+                    if (data.text) {
+                      setResumeText(data.text);
+                      setUploadStatus(data.error ? `⚠ ${data.error}` : `✓ 已导入 ${file.name}`);
+                    } else {
+                      setUploadStatus(`⚠ ${data.error || "解析失败"}`);
+                    }
+                  } catch {
+                    setUploadStatus("解析失败，请手动粘贴");
+                  }
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+          {uploadStatus && (
+            <p className={`text-xs mb-2 ${uploadStatus.startsWith("✓") ? "text-green-600" : uploadStatus.startsWith("⚠") ? "text-amber-600" : "text-muted"}`}>
+              {uploadStatus}
+            </p>
+          )}
           <textarea
             value={resumeText}
             onChange={(e) => setResumeText(e.target.value)}
-            placeholder={"粘贴简历内容...\n\n教育背景、实习经历、项目经验\n\n（越详细，小抄越精准）"}
-            rows={12}
+            placeholder={"粘贴简历内容，或点击上方「上传文件」导入 PDF/Word\n\n教育背景、实习经历、项目经验\n\n（越详细，小抄越精准）"}
+            rows={11}
             className="w-full border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
           />
         </div>
