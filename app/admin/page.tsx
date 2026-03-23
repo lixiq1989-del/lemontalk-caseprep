@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 
 // Admin emails - add yours here
-const ADMIN_EMAILS = ["simon@lemontalk.com", "lixiq1989@gmail.com"];
+const ADMIN_EMAILS = ["simon@lemontalk.com", "lixiq1989@gmail.com", "lixiq1989@163.com"];
 
 type Tab = "dashboard" | "users" | "posts" | "cases" | "matches";
 
