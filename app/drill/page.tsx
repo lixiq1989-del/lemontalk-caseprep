@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { DRILLS, DRILL_CATEGORIES, shuffleDrills, generateMathDrills, type DrillQuestion } from "@/lib/drills";
+import { SIZING_CASES } from "@/lib/sizing";
 
 type Mode = "home" | "drill" | "result";
 
@@ -245,6 +246,25 @@ export default function DrillPage() {
             );
           })}
         </div>
+
+        {/* Sizing Flow */}
+        <Link
+          href="/drill/sizing"
+          className="card-hover block border-2 border-pink-200 rounded-xl p-5 bg-gradient-to-r from-pink-50 to-purple-50 mb-8"
+        >
+          <div className="flex items-center gap-4">
+            <div className="text-3xl">🎯</div>
+            <div>
+              <h3 className="font-bold text-base">Market Sizing 闯关</h3>
+              <p className="text-xs text-muted mt-0.5">
+                分步引导估算，像真面试一样一步步推导，完整走完只要 2 分钟
+              </p>
+            </div>
+            <div className="ml-auto text-primary text-sm font-medium">
+              {SIZING_CASES.length} 题 →
+            </div>
+          </div>
+        </Link>
 
         <div className="text-center">
           <Link href="/" className="text-sm text-muted hover:text-primary">
