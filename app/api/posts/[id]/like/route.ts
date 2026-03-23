@@ -1,22 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { toggleLike } from "@/lib/db";
+import { supabaseAdmin } from "@/lib/supabase-server";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+  const postId = Number(id);
+
   try {
-    const { id } = await params;
     const body = await request.json();
-    const { student_id } = body;
+    const studentId = body.student_id;
 
-    if (!student_id) {
-      return NextResponse.json({ error: "缺少student_id" }, { status: 400 });
-    }
+    // Get current likes
+    const { data: post } = await supabaseAdmin.from("posts").select("likes").eq("id", postId).single();
+    if (!post) return NextResponse.json({ error: "帖子不存在" }, { status: 404 });
 
-    const result = toggleLike(Number(id), student_id);
-    return NextResponse.json(result);
-  } catch {
-    return NextResponse.json({ error: "操作失败" }, { status: 500 });
+    // Simple toggle - just increment/decrement (no per-user tracking for now)
+    const newLikes = (post.likes || 0) + (body.unlike ? -1 : 1);
+    await supabaseAdmin.from("posts").update({ likes: Math.max(0, newLikes) }).eq("id", postId);
+
+    return NextResponse.json({ liked: !body.unlike, likes: Math.max(0, newLikes), student_id: studentId });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStudent } from "@/lib/db";
+import { supabaseAdmin } from "@/lib/supabase-server";
 
 export async function GET(
   _request: NextRequest,
@@ -7,14 +7,16 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  const student = getStudent(Number(id));
+  const { data: student, error } = await supabaseAdmin
+    .from("students")
+    .select("*")
+    .eq("id", Number(id))
+    .eq("active", true)
+    .single();
 
-  if (!student) {
+  if (error || !student) {
     return NextResponse.json({ error: "用户不存在" }, { status: 404 });
   }
 
-  // Sessions not tracked in memory store for now
-  const sessions: unknown[] = [];
-
-  return NextResponse.json({ student, sessions });
+  return NextResponse.json({ student, sessions: [] });
 }

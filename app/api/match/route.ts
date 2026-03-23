@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMatches, addMatchRequest, getStudent, addStudent } from "@/lib/db";
+import { supabaseAdmin } from "@/lib/supabase-server";
 
 export async function GET(request: NextRequest) {
   const studentId = request.nextUrl.searchParams.get("student_id");
@@ -7,64 +7,54 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ matches: [] });
   }
 
-  const matches = getMatches(Number(studentId));
-  return NextResponse.json({ matches });
+  const { data } = await supabaseAdmin
+    .from("match_requests")
+    .select("*")
+    .or(`from_id.eq.${studentId},to_id.eq.${studentId}`)
+    .order("created_at", { ascending: false });
+
+  return NextResponse.json({ matches: data || [] });
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { from_id, from_name, from_wechat, to_id, message, slot } = body;
+    const { from_id, from_name, from_wechat, to_id, message, slot, user_id } = body;
 
     if (!to_id) {
       return NextResponse.json({ error: "缺少必填字段" }, { status: 400 });
     }
 
-    const toStudent = getStudent(to_id);
+    // Check target exists
+    const { data: toStudent } = await supabaseAdmin
+      .from("students")
+      .select("wechat")
+      .eq("id", to_id)
+      .single();
+
     if (!toStudent) {
       return NextResponse.json({ error: "接收者不存在" }, { status: 404 });
     }
 
-    // Support both old (from_id) and new (from_name + from_wechat) flow
-    let actualFromId = from_id;
+    const fullMessage = slot ? `[时段:${slot}] ${message || ""}` : message || "";
 
-    if (!actualFromId && from_name && from_wechat) {
-      // Auto-create or find student by wechat
-      try {
-        actualFromId = addStudent({
-          name: from_name,
-          wechat: from_wechat,
-          school: "未填写",
-        });
-      } catch {
-        // wechat already exists - that's fine, just use message-based matching
-        actualFromId = 0;
-      }
+    const { data, error } = await supabaseAdmin.from("match_requests").insert({
+      from_id: from_id || 0,
+      from_name: from_name || "",
+      from_wechat: from_wechat || "",
+      to_id,
+      message: fullMessage,
+      slot: slot || "",
+      user_id: user_id || null,
+    }).select().single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    if (!actualFromId) {
-      actualFromId = 0; // anonymous booking
-    }
-
-    if (actualFromId === to_id) {
-      return NextResponse.json({ error: "不能向自己发送匹配请求" }, { status: 400 });
-    }
-
-    const fullMessage = slot
-      ? `[时段:${slot}] ${message || ""}`
-      : message || "";
-
-    const id = addMatchRequest(actualFromId, to_id, fullMessage);
-
-    return NextResponse.json({
-      id,
-      partner_wechat: toStudent.wechat,
-    }, { status: 201 });
+    return NextResponse.json({ id: data.id, partner_wechat: toStudent.wechat }, { status: 201 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    if (message.includes("UNIQUE constraint failed")) {
-      return NextResponse.json({ error: "你已经向该用户发送过匹配请求" }, { status: 409 });
-    }
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

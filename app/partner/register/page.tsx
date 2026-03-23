@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
 
 const firmOptions = ["MBB", "Big4", "Boutique", "Internal Strategy", "Other"];
 const levelOptions = [
@@ -175,6 +176,7 @@ function WeeklyGrid({
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -214,6 +216,7 @@ export default function RegisterPage() {
           availability,
           language,
           bio,
+          user_id: user?.id || null,
         }),
       });
       if (!res.ok) {
