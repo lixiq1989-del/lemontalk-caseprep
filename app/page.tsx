@@ -26,6 +26,14 @@ const features = [
     iconBg: "bg-purple-100",
   },
   {
+    href: "/drill",
+    icon: "⚡",
+    title: "每日一练",
+    desc: "碎片化刷题，每题30秒，框架选择/数学速算/商业判断/结构化思维",
+    color: "bg-red-50 border-red-200",
+    iconBg: "bg-red-100",
+  },
+  {
     href: "/ai",
     icon: "🤖",
     title: "AI 助手",
