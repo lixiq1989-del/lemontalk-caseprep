@@ -364,7 +364,7 @@ export default function PartnerPage() {
                     : "bg-white text-muted hover:bg-gray-50"
                 }`}
               >
-                卡片
+                Partner
               </button>
               <button
                 onClick={() => setViewMode("sessions")}
@@ -374,7 +374,7 @@ export default function PartnerPage() {
                     : "bg-white text-muted hover:bg-gray-50"
                 }`}
               >
-                Sessions
+                时间表
               </button>
             </div>
             <Link
