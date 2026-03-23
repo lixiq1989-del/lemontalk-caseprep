@@ -18,8 +18,15 @@ const features = [
     color: "bg-amber-50 text-amber-600",
   },
   {
+    icon: "⚡",
+    title: "面试突击小抄",
+    desc: "输入公司+岗位+简历，AI生成专属面试准备清单",
+    href: "/ai/sprint",
+    color: "bg-indigo-50 text-indigo-600",
+  },
+  {
     icon: "📋",
-    title: "面试小抄",
+    title: "框架速查",
     desc: "常用框架、公式、行业数据速查",
     href: "/ai/cheatsheet",
     color: "bg-green-50 text-green-600",
