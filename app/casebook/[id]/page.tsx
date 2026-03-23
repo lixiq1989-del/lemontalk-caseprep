@@ -4,6 +4,17 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
+interface CaseSections {
+  clarifying?: string;
+  framework?: string;
+  exhibit1?: string;
+  exhibit2?: string;
+  qa?: string;
+  recommendation?: string;
+  tips?: string;
+  deep_analysis?: string;
+}
+
 interface CaseDetail {
   id: number;
   title: string;
@@ -15,6 +26,7 @@ interface CaseDetail {
   prompt_en: string;
   prompt_cn: string;
   content: string;
+  sections: CaseSections;
   tags: string[];
   created_at: string;
 }
@@ -107,7 +119,18 @@ export default function CaseDetailPage() {
     );
   }
 
-  const contentSections = parseContent(caseData.content);
+  const sec = caseData.sections || {};
+  const studySections: { title: string; body: string; key: string }[] = [];
+  if (sec.clarifying) studySections.push({ key: "clarifying", title: "澄清信息 Clarifying Info", body: sec.clarifying });
+  if (sec.framework) studySections.push({ key: "framework", title: "分析框架 Framework", body: sec.framework });
+  if (sec.exhibit1) studySections.push({ key: "exhibit1", title: "Exhibit #1 — 数据分析", body: sec.exhibit1 });
+  if (sec.exhibit2) studySections.push({ key: "exhibit2", title: "Exhibit #2 — 方案对比", body: sec.exhibit2 });
+  if (sec.qa) studySections.push({ key: "qa", title: "问题与回答 Q&A", body: sec.qa });
+  if (sec.recommendation) studySections.push({ key: "recommendation", title: "建议 Recommendation", body: sec.recommendation });
+  if (sec.tips) studySections.push({ key: "tips", title: "面试技巧 Tips", body: sec.tips });
+  if (sec.deep_analysis) studySections.push({ key: "deep_analysis", title: "深度分析", body: sec.deep_analysis });
+  // Fallback to content parsing if no sections
+  const contentSections = studySections.length > 0 ? studySections : parseContent(caseData.content);
 
   // Full view mode (traditional)
   if (showFullMode) {
@@ -304,9 +327,18 @@ export default function CaseDetailPage() {
           <div className="border border-green-200 rounded-xl p-6 bg-green-50">
             <h2 className="text-sm font-semibold text-green-700 mb-3">参考框架</h2>
             <div className="text-sm leading-relaxed whitespace-pre-wrap text-green-900">
-              {contentSections[0]?.body || caseData.content.split("\n\n")[0]}
+              {sec.framework || caseData.content.split("\n\n")[0] || "暂无参考框架"}
             </div>
           </div>
+
+          {sec.clarifying && (
+            <div className="border border-gray-200 rounded-xl p-5 bg-gray-50">
+              <h2 className="text-sm font-semibold text-gray-700 mb-2">澄清信息（面试官提供）</h2>
+              <div className="text-sm leading-relaxed whitespace-pre-wrap text-gray-800">
+                {sec.clarifying}
+              </div>
+            </div>
+          )}
 
           {myFramework && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">

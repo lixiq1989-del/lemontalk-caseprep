@@ -22,6 +22,17 @@ export interface Student {
   updated_at: string;
 }
 
+export interface CaseSections {
+  clarifying?: string;
+  framework?: string;
+  exhibit1?: string;
+  exhibit2?: string;
+  qa?: string;
+  recommendation?: string;
+  tips?: string;
+  deep_analysis?: string;
+}
+
 export interface Case {
   id: number;
   title: string;
@@ -33,6 +44,7 @@ export interface Case {
   prompt_en: string;
   prompt_cn: string;
   content: string;
+  sections: CaseSections;
   tags: string[];
   created_at: string;
 }
@@ -112,134 +124,23 @@ store.students.push({
 });
 store._nextId.students = 2;
 
-// Seed cases
-const SEED_CASES_DATA: Omit<Case, "id" | "created_at">[] = [
-  {
-    title: "Airline Profitability Decline",
-    title_cn: "航空公司盈利能力下降",
-    type: "Profitability",
-    difficulty: "Medium",
-    industry: "Transportation",
-    source: "McKinsey Style",
-    prompt_en:
-      "Your client is a major airline that has seen its profits decline by 20% over the past two years despite stable passenger numbers. The CEO has asked you to identify the root causes and recommend actions to restore profitability.",
-    prompt_cn:
-      "你的客户是一家大型航空公司，在过去两年中尽管乘客数量稳定，但利润下降了20%。CEO请你找出根本原因并提出恢复盈利能力的建议。",
-    content:
-      "Key areas to explore:\n1. Revenue side: ticket pricing trends, ancillary revenue, load factor by route\n2. Cost side: fuel costs, labor costs, maintenance, leasing fees\n3. Competitive landscape: new entrants, price wars\n4. Operational efficiency: fleet utilization, turnaround times\n\nExpected framework: Profit = Revenue - Cost, then drill into each component.",
-    tags: ["profit", "airline", "cost analysis"],
-  },
-  {
-    title: "Coffee Chain Market Entry in China",
-    title_cn: "咖啡连锁品牌进入中国市场",
-    type: "Market Entry",
-    difficulty: "Hard",
-    industry: "Consumer Goods",
-    source: "Bain Style",
-    prompt_en:
-      "A European premium coffee chain with 500 stores across Europe is considering entering the Chinese market. They want your advice on whether to enter, and if so, what strategy to pursue.",
-    prompt_cn:
-      "一家拥有500家门店的欧洲高端咖啡连锁品牌正在考虑进入中国市场。他们希望你提供是否进入的建议，以及如果进入，应该采取什么策略。",
-    content:
-      "Key areas to explore:\n1. Market attractiveness: size, growth rate, consumer preferences\n2. Competitive landscape: Starbucks, Luckin, local brands\n3. Entry mode: JV, franchise, wholly-owned\n4. City selection: tier 1 vs tier 2 cities\n5. Localization: menu adaptation, pricing strategy, digital integration\n\nKey data: China coffee market growing at 15% CAGR, but tea culture dominant. Luckin has 10,000+ stores.",
-    tags: ["market entry", "China", "coffee", "consumer"],
-  },
-  {
-    title: "SaaS Product Pricing Strategy",
-    title_cn: "SaaS产品定价策略",
-    type: "Pricing",
-    difficulty: "Medium",
-    industry: "Technology",
-    source: "BCG Style",
-    prompt_en:
-      "Your client is a B2B SaaS company that provides project management tools. They currently use a flat-rate pricing model at $49/month per team. They are considering switching to a usage-based or tiered pricing model. What would you recommend?",
-    prompt_cn:
-      "你的客户是一家B2B SaaS公司，提供项目管理工具。他们目前采用每团队每月49美元的统一定价模式。他们正在考虑切换到基于用量或分层定价模式。你有什么建议？",
-    content:
-      "Key areas to explore:\n1. Current customer segmentation: usage patterns, willingness to pay\n2. Competitive pricing benchmarks\n3. Value metrics: users, projects, storage, features\n4. Impact modeling: revenue impact under different scenarios\n5. Migration risk: churn from price changes\n\nFramework: Value-based pricing approach - identify value drivers, segment customers, design tiers that capture value.",
-    tags: ["pricing", "SaaS", "B2B", "technology"],
-  },
-  {
-    title: "Pharmaceutical Company Acquisition",
-    title_cn: "制药公司并购评估",
-    type: "M&A",
-    difficulty: "Hard",
-    industry: "Healthcare",
-    source: "McKinsey Style",
-    prompt_en:
-      "A large pharmaceutical company is considering acquiring a mid-size biotech firm that has a promising drug in Phase III clinical trials. The asking price is $5 billion. Should they proceed with the acquisition?",
-    prompt_cn:
-      "一家大型制药公司正在考虑收购一家中型生物科技公司，该公司有一款处于III期临床试验的有前途的药物。要价为50亿美元。他们是否应该进行收购？",
-    content:
-      "Key areas to explore:\n1. Target valuation: DCF based on drug pipeline potential\n2. Drug assessment: Phase III success probability (~60%), market size, patent life\n3. Synergies: R&D, manufacturing, distribution, sales force\n4. Strategic fit: therapeutic area alignment, portfolio gaps\n5. Risks: regulatory, clinical trial failure, integration\n\nKey data: Similar drugs have a $2B annual peak sales potential. Phase III to approval typically takes 2-3 years.",
-    tags: ["M&A", "pharma", "biotech", "valuation"],
-  },
-  {
-    title: "Electric Vehicle Market Size in Southeast Asia",
-    title_cn: "东南亚电动汽车市场规模估算",
-    type: "Market Sizing",
-    difficulty: "Easy",
-    industry: "Automotive",
-    source: "Oliver Wyman Style",
-    prompt_en:
-      "Estimate the market size (in units sold per year) of electric vehicles in Southeast Asia in 2025.",
-    prompt_cn:
-      "请估算2025年东南亚地区电动汽车的市场规模（按年销量计算）。",
-    content:
-      "Approach (top-down):\n1. Total population: ~700M across ASEAN\n2. Number of households: ~180M\n3. Car ownership rate: ~15% → ~27M cars total\n4. Annual new car sales: ~3.5M (replacement cycle ~8 years)\n5. EV penetration rate: ~8-10% in 2025 → ~280K-350K EVs\n\nAlternative (bottom-up by country):\n- Thailand: ~80K, Indonesia: ~70K, Vietnam: ~50K, Philippines: ~30K, Malaysia: ~40K, Others: ~30K\n- Total: ~300K units\n\nSanity check: Global EV sales ~15M in 2025, SEA is ~2% of global → ~300K.",
-    tags: ["market sizing", "EV", "Southeast Asia", "automotive"],
-  },
-  {
-    title: "Retail Bank Digital Growth Strategy",
-    title_cn: "零售银行数字化增长战略",
-    type: "Growth Strategy",
-    difficulty: "Medium",
-    industry: "Financial Services",
-    source: "BCG Style",
-    prompt_en:
-      "Your client is a traditional retail bank with 5 million customers. Over the past 3 years, they have been losing market share to digital-first banks and fintech companies. The CEO wants a strategy to achieve 15% customer growth over the next 3 years.",
-    prompt_cn:
-      "你的客户是一家拥有500万客户的传统零售银行。在过去3年中，他们一直在向数字优先银行和金融科技公司失去市场份额。CEO希望制定一项战略，在未来3年内实现15%的客户增长。",
-    content:
-      "Key areas to explore:\n1. Current state: customer demographics, digital adoption rate, NPS\n2. Competitive analysis: what digital banks offer differently\n3. Growth levers:\n   a. Acquisition: digital onboarding, referral programs, partnerships\n   b. Retention: improve digital experience, personalization\n   c. Cross-sell: data-driven product recommendations\n4. Digital transformation: mobile app redesign, API banking, AI chatbot\n5. Investment required vs. expected ROI\n\nFramework: Ansoff matrix + digital capability assessment",
-    tags: ["growth", "banking", "digital transformation", "fintech"],
-  },
-  {
-    title: "Luxury Brand E-commerce Strategy",
-    title_cn: "奢侈品牌电商战略",
-    type: "Growth Strategy",
-    difficulty: "Medium",
-    industry: "Consumer Goods",
-    source: "Bain Style",
-    prompt_en:
-      "A luxury fashion brand wants to grow its online sales from 10% to 30% of total revenue within 3 years without diluting its brand image. How should they approach this?",
-    prompt_cn:
-      "一家奢侈时尚品牌希望在3年内将线上销售额从总收入的10%提高到30%，同时不稀释品牌形象。他们应该如何做？",
-    content:
-      "Key areas to explore:\n1. Current digital presence and capabilities\n2. Channel strategy: own site vs marketplace vs social commerce\n3. Brand protection: pricing consistency, exclusivity\n4. Customer experience: AR try-on, personalization, VIP services\n5. Operations: fulfillment, returns, customer service\n\nKey tension: growth vs exclusivity. Solution: controlled digital expansion with premium experience.",
-    tags: ["luxury", "e-commerce", "growth", "brand strategy"],
-  },
-  {
-    title: "Hospital Operations Optimization",
-    title_cn: "医院运营优化",
-    type: "Operations",
-    difficulty: "Hard",
-    industry: "Healthcare",
-    source: "McKinsey Style",
-    prompt_en:
-      "A large hospital network is experiencing long wait times in their emergency departments, with average wait times increasing from 2 hours to 4 hours over the past year. How would you help them reduce wait times?",
-    prompt_cn:
-      "一家大型医院网络的急诊科等候时间过长，过去一年平均等候时间从2小时增加到4小时。你将如何帮助他们缩短等候时间？",
-    content:
-      "Key areas to explore:\n1. Demand analysis: patient volume trends, peak hours, case mix\n2. Capacity: beds, staff, equipment utilization\n3. Process flow: triage, treatment, discharge bottlenecks\n4. Staffing: scheduling, skill mix, overtime\n5. Technology: digital triage, patient tracking, predictive scheduling\n\nFramework: Process optimization + capacity planning. Look for bottlenecks in the patient flow.",
-    tags: ["operations", "healthcare", "hospital", "optimization"],
-  },
-];
+// Import 84 real cases from LemonTalk CaseBook 2026
+import { CASES_DATA } from "./cases_data";
 
-for (const c of SEED_CASES_DATA) {
+for (const c of CASES_DATA) {
   store.cases.push({
     id: store._nextId.cases++,
-    ...c,
+    title: c.title,
+    title_cn: c.title_cn,
+    type: c.type,
+    difficulty: c.difficulty,
+    industry: c.industry,
+    source: c.source,
+    prompt_en: c.prompt_en,
+    prompt_cn: c.prompt_cn,
+    content: c.sections.framework || "",
+    sections: c.sections,
+    tags: c.tags,
     created_at: now(),
   });
 }
