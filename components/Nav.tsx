@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
 
 const tabs = [
   { href: "/", label: "首页", icon: "🏠" },
@@ -14,6 +15,7 @@ const tabs = [
 
 export default function Nav() {
   const pathname = usePathname();
+  const { user, loading } = useAuth();
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-border">
@@ -44,12 +46,23 @@ export default function Nav() {
           })}
         </div>
         <div className="ml-auto">
-          <Link
-            href="/profile"
-            className="text-sm px-3 py-1.5 rounded-lg bg-primary text-white hover:bg-blue-700 transition-colors"
-          >
-            我的
-          </Link>
+          {loading ? (
+            <div className="w-16 h-8" />
+          ) : user ? (
+            <Link
+              href="/profile"
+              className="text-sm px-3 py-1.5 rounded-lg bg-primary text-white hover:bg-blue-700 transition-colors"
+            >
+              我的
+            </Link>
+          ) : (
+            <Link
+              href="/auth"
+              className="text-sm px-3 py-1.5 rounded-lg bg-primary text-white hover:bg-blue-700 transition-colors"
+            >
+              登录
+            </Link>
+          )}
         </div>
       </div>
     </nav>
