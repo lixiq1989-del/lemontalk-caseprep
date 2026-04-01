@@ -20,6 +20,8 @@ interface Post {
 
 const categories = [
   { key: "all", label: "全部" },
+  { key: "insights", label: "💡 Insights" },
+  { key: "offer", label: "🎉 Offer墙" },
   { key: "interview_exp", label: "面经" },
   { key: "case_discussion", label: "Case讨论" },
   { key: "help", label: "求助" },
@@ -28,6 +30,8 @@ const categories = [
 ];
 
 const categoryColors: Record<string, string> = {
+  insights: "bg-amber-100 text-amber-700",
+  offer: "bg-yellow-100 text-yellow-700",
   interview_exp: "bg-blue-100 text-blue-700",
   case_discussion: "bg-purple-100 text-purple-700",
   help: "bg-orange-100 text-orange-700",
@@ -36,6 +40,8 @@ const categoryColors: Record<string, string> = {
 };
 
 const categoryLabels: Record<string, string> = {
+  insights: "💡 Insights",
+  offer: "🎉 Offer",
   interview_exp: "面经",
   case_discussion: "Case讨论",
   help: "求助",
@@ -136,7 +142,13 @@ export default function CommunityPage() {
             <Link
               key={post.id}
               href={`/community/${post.id}`}
-              className="block border border-border rounded-lg p-4 card-hover bg-white"
+              className={`block border rounded-lg p-4 card-hover ${
+                post.category === "offer"
+                  ? "border-yellow-300 bg-yellow-50"
+                  : post.category === "insights"
+                  ? "border-amber-200 bg-amber-50"
+                  : "border-border bg-white"
+              }`}
             >
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">

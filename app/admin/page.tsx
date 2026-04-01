@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 // Admin emails - add yours here
 const ADMIN_EMAILS = ["simon@lemontalk.com", "lixiq1989@gmail.com", "lixiq1989@163.com"];
 
-type Tab = "dashboard" | "users" | "posts" | "cases" | "matches";
+type Tab = "dashboard" | "users" | "posts" | "cases" | "matches" | "reviews";
 
 interface UserRow {
   id: number;
@@ -40,18 +40,30 @@ interface MatchRow {
   created_at: string;
 }
 
+interface ReviewRow {
+  id: number;
+  reviewer_name: string;
+  student_id: number;
+  rating: number;
+  tags: string[];
+  comment: string;
+  created_at: string;
+}
+
 interface DashboardStats {
   users: number;
   posts: number;
   comments: number;
   matches: number;
   drills: number;
+  reviews: number;
 }
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const [tab, setTab] = useState<Tab>("dashboard");
-  const [stats, setStats] = useState<DashboardStats>({ users: 0, posts: 0, comments: 0, matches: 0, drills: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ users: 0, posts: 0, comments: 0, matches: 0, drills: 0, reviews: 0 });
+  const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [matches, setMatches] = useState<MatchRow[]>([]);
@@ -88,7 +100,14 @@ export default function AdminPage() {
     if (tab === "dashboard") {
       const { count: commentCount } = await supabase.from("comments").select("*", { count: "exact", head: true });
       const { count: drillCount } = await supabase.from("drill_records").select("*", { count: "exact", head: true });
-      setStats(prev => ({ ...prev, comments: commentCount || 0, drills: drillCount || 0 }));
+      const { count: reviewCount } = await supabase.from("partner_reviews").select("*", { count: "exact", head: true });
+      setStats(prev => ({ ...prev, comments: commentCount || 0, drills: drillCount || 0, reviews: reviewCount || 0 }));
+    }
+
+    if (tab === "reviews") {
+      const { data, count } = await supabase.from("partner_reviews").select("*", { count: "exact" }).order("created_at", { ascending: false });
+      setReviews((data as ReviewRow[]) || []);
+      setStats(prev => ({ ...prev, reviews: count || 0 }));
     }
 
     setLoading(false);
@@ -123,6 +142,7 @@ export default function AdminPage() {
     { key: "users", label: "用户管理", icon: "👥" },
     { key: "posts", label: "内容审核", icon: "📝" },
     { key: "matches", label: "匹配记录", icon: "🤝" },
+    { key: "reviews", label: "Partner评价", icon: "⭐" },
   ];
 
   return (
@@ -157,6 +177,7 @@ export default function AdminPage() {
               { label: "评论", value: stats.comments, color: "text-green-600" },
               { label: "匹配请求", value: stats.matches, color: "text-orange-600" },
               { label: "刷题次数", value: stats.drills, color: "text-pink-600" },
+              { label: "Partner评价", value: stats.reviews, color: "text-yellow-600" },
             ].map(s => (
               <div key={s.label} className="border border-border rounded-xl p-4 bg-white text-center">
                 <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
@@ -295,6 +316,41 @@ export default function AdminPage() {
               ))}
               {posts.length === 0 && (
                 <tr><td colSpan={6} className="text-center py-10 text-muted">暂无帖子</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Reviews */}
+      {!loading && tab === "reviews" && (
+        <div className="border border-border rounded-xl bg-white overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 border-b border-border">
+                <th className="text-left px-4 py-3 font-medium">评价人</th>
+                <th className="text-left px-4 py-3 font-medium">被评人ID</th>
+                <th className="text-left px-4 py-3 font-medium">评分</th>
+                <th className="text-left px-4 py-3 font-medium">标签</th>
+                <th className="text-left px-4 py-3 font-medium">评论</th>
+                <th className="text-left px-4 py-3 font-medium">时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reviews.map(r => (
+                <tr key={r.id} className="border-b border-border hover:bg-gray-50">
+                  <td className="px-4 py-3 font-medium">{r.reviewer_name || "匿名"}</td>
+                  <td className="px-4 py-3 text-muted">#{r.student_id}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-yellow-500">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
+                  </td>
+                  <td className="px-4 py-3 text-xs">{(r.tags || []).join(", ") || "-"}</td>
+                  <td className="px-4 py-3 text-xs max-w-[200px] truncate">{r.comment || "-"}</td>
+                  <td className="px-4 py-3 text-muted text-xs">{new Date(r.created_at).toLocaleDateString("zh-CN")}</td>
+                </tr>
+              ))}
+              {reviews.length === 0 && (
+                <tr><td colSpan={6} className="text-center py-10 text-muted">暂无评价</td></tr>
               )}
             </tbody>
           </table>

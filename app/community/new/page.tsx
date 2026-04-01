@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const categoryOptions = [
+  { value: "insights", label: "💡 Insights（行业洞察/备考技巧）" },
+  { value: "offer", label: "🎉 Offer打卡（晒Offer）" },
   { value: "interview_exp", label: "面经" },
   { value: "case_discussion", label: "Case讨论" },
   { value: "help", label: "求助" },

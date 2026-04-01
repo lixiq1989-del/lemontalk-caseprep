@@ -271,7 +271,7 @@ export default function SizingPage() {
                 <button
                   onClick={handleNumber}
                   disabled={!numberInput.trim()}
-                  className="mt-3 w-full bg-primary text-white rounded-xl py-2.5 text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-30"
+                  className="mt-3 w-full bg-primary text-white rounded-xl py-2.5 text-sm font-medium hover:bg-[#0A2E4A] transition-colors disabled:opacity-30"
                 >
                   确认
                 </button>
@@ -305,7 +305,7 @@ export default function SizingPage() {
         {stepSubmitted && (
           <button
             onClick={nextStep}
-            className="w-full bg-primary text-white rounded-xl py-3 text-sm font-semibold hover:bg-blue-700 transition-colors"
+            className="w-full bg-primary text-white rounded-xl py-3 text-sm font-semibold hover:bg-[#0A2E4A] transition-colors"
           >
             {step + 1 >= activeCase.steps.length
               ? "查看最终结果 →"
@@ -411,7 +411,7 @@ export default function SizingPage() {
         <div className="space-y-3">
           <button
             onClick={() => setMode("list")}
-            className="w-full bg-primary text-white rounded-xl py-3 text-sm font-semibold hover:bg-blue-700 transition-colors"
+            className="w-full bg-primary text-white rounded-xl py-3 text-sm font-semibold hover:bg-[#0A2E4A] transition-colors"
           >
             做下一题
           </button>

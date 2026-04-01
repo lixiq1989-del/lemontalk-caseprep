@@ -16,7 +16,21 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ students: data || [] });
+  // Enrich with avg rating
+  const students = data || [];
+  const enriched = await Promise.all(
+    students.map(async (s) => {
+      const { data: reviews } = await supabaseAdmin
+        .from("partner_reviews")
+        .select("rating")
+        .eq("student_id", s.id);
+      if (!reviews || reviews.length === 0) return s;
+      const avg = Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) * 10) / 10;
+      return { ...s, avg_rating: avg, review_count: reviews.length };
+    })
+  );
+
+  return NextResponse.json({ students: enriched });
 }
 
 export async function POST(request: NextRequest) {

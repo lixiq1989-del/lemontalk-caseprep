@@ -107,6 +107,16 @@ export default function CaseDetailPage() {
       .catch(() => setLoading(false));
   }, [id]);
 
+  // Mark as studied when reaching analysis or full phase
+  useEffect(() => {
+    if (phase === "analysis" || phase === "full") {
+      const studied: string[] = JSON.parse(localStorage.getItem("studied_cases") || "[]");
+      if (!studied.includes(String(id))) {
+        localStorage.setItem("studied_cases", JSON.stringify([...studied, String(id)]));
+      }
+    }
+  }, [phase, id]);
+
   if (loading) {
     return <div className="text-center py-20 text-muted">加载中...</div>;
   }

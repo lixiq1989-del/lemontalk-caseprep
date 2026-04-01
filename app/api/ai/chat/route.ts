@@ -11,51 +11,22 @@ interface ChatRequest {
   history: ChatMessage[];
 }
 
-// Simple keyword-based response generator (placeholder for real AI)
-function generateMockResponse(message: string, history: ChatMessage[]): string {
-  const lower = message.toLowerCase();
-  const turnCount = history.filter((m) => m.role === "user").length;
+const MOCK_SYSTEM = `你是一位麦肯锡合伙人，正在主持一场Case Interview。
 
-  if (turnCount <= 1) {
-    return "好的分析思路。让我给你一些数据来帮助分析。你能把你的框架再展开说说吗？每个维度具体要看什么指标？";
-  }
+规则：
+- 你只说面试官该说的话，不解释meta信息
+- 给出数据时要简洁，一次只给一个challenge
+- 学生分析合理时给予肯定但继续追问细节
+- 学生分析不当时用"有意思，但..."引导正确方向
+- 学生给出最终建议时，给出专业评价并结束面试
+- 全程中文，专业但友好
+- 每次回复不超过100字`;
 
-  if (lower.includes("收入") || lower.includes("revenue") || lower.includes("价格") || lower.includes("销量")) {
-    return "很好，你提到了收入端。让我告诉你：过去一年收入增长了10%，其中价格没有变化，销量增长了10%。但利润反而下降了，你觉得问题可能在哪？";
-  }
-
-  if (lower.includes("成本") || lower.includes("cost") || lower.includes("费用")) {
-    return "好的方向。成本端确实有问题：固定成本增长了30%（主要是扩张带来的租金和人员），可变成本增长了15%（原材料涨价）。你觉得应该优先解决哪个？";
-  }
-
-  if (lower.includes("建议") || lower.includes("方案") || lower.includes("总结")) {
-    return "很好的总结。请用30秒的「电梯演讲」格式做一个最终推荐：结论 → 关键原因 → 建议行动 → 风险和下一步。";
-  }
-
-  if (turnCount >= 5) {
-    return "非常好的分析！这个Case就到这里。你的表现整体不错，逻辑清晰，框架合理。建议继续保持结构化的分析方式，在数据分析部分可以再深入一些。点击「重新开始」继续练习吧！";
-  }
-
-  return "有道理。请继续深入分析，你能用数据来支撑你的观点吗？面试中记住要先说结论再说原因。";
-}
-
-function generateQAResponse(message: string): string {
-  const lower = message.toLowerCase();
-
-  if (lower.includes("框架") || lower.includes("framework")) {
-    return "Case面试中常用的框架包括：\n\n1. Profitability（盈利能力）：Revenue - Cost\n2. Market Entry（市场进入）：市场吸引力、竞争格局、公司能力、进入方式\n3. M&A（并购）：战略价值、目标评估、估值、整合\n4. Pricing（定价）：成本导向、竞争导向、价值导向\n5. Growth Strategy（增长策略）：有机增长 vs 非有机增长\n\n你想深入了解哪个框架？";
-  }
-
-  if (lower.includes("数学") || lower.includes("计算") || lower.includes("公式")) {
-    return "Case面试常用公式：\n\n• Break-even = Fixed Cost / (Price - Variable Cost)\n• ROI = (Gain - Cost) / Cost × 100%\n• Market Share = Company Revenue / Total Market Revenue\n• CAGR = (End/Start)^(1/n) - 1\n• Payback Period = Investment / Annual Cash Flow\n\n记住：面试中要大声说出计算过程！";
-  }
-
-  if (lower.includes("技巧") || lower.includes("tip") || lower.includes("注意")) {
-    return "Case面试核心技巧：\n\n1. 开头：复述问题，确认理解\n2. 框架：说出框架名称，MECE原则\n3. 分析：先说结论，再说原因\n4. 数学：大声说出计算过程\n5. 结尾：30秒总结推荐方案\n\n最重要的是展现结构化思维能力，而不是背框架！";
-  }
-
-  return "这是一个好问题！在Case面试中，关键是展现结构化思维和商业直觉。建议你：\n\n1. 先搭建清晰的分析框架\n2. 用数据支撑你的论点\n3. 给出可执行的建议\n\n你可以问我更具体的问题，比如某个框架怎么用，或者某类Case怎么分析。";
-}
+const QA_SYSTEM = `你是一位资深咨询顾问，专门帮助学生准备Case Interview。
+- 回答要简洁实用，直接可用
+- 用具体例子说明，不说废话
+- 全程中文
+- 每次回复200字以内`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,24 +34,57 @@ export async function POST(request: NextRequest) {
     const { type, message, history } = body;
 
     if (!message || !type) {
-      return NextResponse.json(
-        { error: "Missing required fields: type, message" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    let response: string;
-    if (type === "mock") {
-      response = generateMockResponse(message, history || []);
-    } else {
-      response = generateQAResponse(message);
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ response: "AI服务未配置，请联系管理员。" });
     }
 
-    return NextResponse.json({ response });
-  } catch {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    const systemPrompt = type === "mock" ? MOCK_SYSTEM : QA_SYSTEM;
+
+    const messages: { role: string; content: string }[] = [
+      { role: "system", content: systemPrompt },
+    ];
+
+    const recentHistory = (history || []).slice(-6);
+    for (const h of recentHistory) {
+      messages.push({
+        role: h.role === "ai" ? "assistant" : "user",
+        content: h.text,
+      });
+    }
+    messages.push({ role: "user", content: message });
+
+    const response = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages,
+        max_tokens: 300,
+        temperature: 0.7,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`DeepSeek error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const aiResponse =
+      data.choices?.[0]?.message?.content ||
+      "抱歉，请重新表述你的问题。";
+
+    return NextResponse.json({ response: aiResponse });
+  } catch (err) {
+    console.error("AI chat error:", err);
+    return NextResponse.json({
+      response: "系统繁忙，请稍后再试。你可以先思考一下这个问题的分析框架。",
+    });
   }
 }

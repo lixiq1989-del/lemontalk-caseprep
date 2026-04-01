@@ -42,3 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.xhs-browser-data/
+scripts/extracted_*/
+scripts/generated_*/

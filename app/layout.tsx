@@ -15,8 +15,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LemonTalk CasePrep - 咨询面试准备平台",
-  description: "LemonTalk出品 — Case Partner匹配 + 题库 + 社区 + AI助手",
+  title: "CasePrep - 咨询面试准备平台 | Case Partner匹配 + AI练习",
+  description: "LemonTalk出品 — 免费咨询面试备考平台。找Case Partner、刷题、AI模拟面试、PEI练习、行业Insights，助你拿下McKinsey/BCG/Bain等顶级咨询Offer。",
+  keywords: "咨询面试, Case Interview, Case Partner, McKinsey, BCG, Bain, 管培生, 咨询备考, 行为面试, PEI",
+  openGraph: {
+    title: "CasePrep - 咨询面试准备平台",
+    description: "找Case Partner、刷题、AI模拟面试，助你拿下顶级咨询Offer",
+    type: "website",
+    locale: "zh_CN",
+  },
 };
 
 export default function RootLayout({
@@ -31,7 +38,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <Nav />
-          <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
+          <main className="max-w-6xl mx-auto px-4 py-6 pb-24 md:pb-6">{children}</main>
         </AuthProvider>
       </body>
     </html>

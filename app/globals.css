@@ -3,13 +3,13 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --primary: #2563eb;
-  --primary-light: #eff6ff;
-  --border: #e5e7eb;
-  --muted: #6b7280;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  --primary: #051C2C;
+  --primary-light: #E8EDF2;
+  --border: #D5D5D5;
+  --muted: #6B7A88;
+  --success: #00836E;
+  --warning: #FFB81C;
+  --danger: #C4071B;
 }
 
 @theme inline {
