@@ -5,6 +5,7 @@ import Link from "next/link";
 import { DRILLS, DRILL_CATEGORIES, shuffleDrills, generateMathDrills, type DrillQuestion } from "@/lib/drills";
 import { SIZING_CASES } from "@/lib/sizing";
 import { useAuth } from "@/lib/auth-context";
+import { useSearchParams } from "next/navigation";
 import ChartDisplay from "@/components/ChartDisplay";
 
 type Mode = "home" | "drill" | "result";
@@ -101,11 +102,15 @@ export default function DrillModule({ initialCategory, onClose: _onClose }: Dril
     [dailyCount]
   );
 
-  // Auto-start if initialCategory provided
+  // Read category from URL directly (works with client-side navigation)
+  const searchParams = useSearchParams();
+  const urlCategory = searchParams.get("category");
+
   useEffect(() => {
-    if (initialCategory) startDrill(initialCategory);
+    const cat = urlCategory || initialCategory;
+    if (cat) startDrill(cat);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [urlCategory, initialCategory]);
 
   const recordAnswer = useCallback(
     (isCorrect: boolean) => {
