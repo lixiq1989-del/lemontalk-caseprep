@@ -5,8 +5,24 @@
       "schedule": "0 2 * * *"
     },
     {
-      "path": "/api/cron/intel",
+      "path": "/api/cron/intel?region=CN",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/intel?region=UK",
+      "schedule": "10 3 * * *"
+    },
+    {
+      "path": "/api/cron/intel?region=US",
+      "schedule": "20 3 * * *"
+    },
+    {
+      "path": "/api/cron/intel?region=HK",
+      "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/intel?region=SG",
+      "schedule": "40 3 * * *"
     }
   ]
 }

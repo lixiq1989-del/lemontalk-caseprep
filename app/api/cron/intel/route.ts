@@ -272,10 +272,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Support ?region= param to run a subset (avoids Vercel 10s timeout)
+  const { searchParams } = new URL(request.url);
+  const regionParam = searchParams.get("region"); // "CN", "UK", "US", "HK", "SG", or null for all
+  const queriesSubset = regionParam
+    ? INTEL_QUERIES.filter((q) => q.region === regionParam)
+    : INTEL_QUERIES.slice(0, 3); // Default: only first 3 to stay under timeout
+
   const allSignals: IntelSignal[] = [];
   const results: { name: string; signals: number; error?: string }[] = [];
 
-  for (const iq of INTEL_QUERIES) {
+  for (const iq of queriesSubset) {
     try {
       let combinedContent = "";
 
