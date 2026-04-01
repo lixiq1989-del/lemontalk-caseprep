@@ -79,23 +79,9 @@ ${content.slice(0, 10000)}`;
   }
 }
 
-// ===== Google Search scraper (covers ALL platforms) =====
-async function googleSearch(query: string): Promise<string> {
-  // Use Google's public search page and extract snippets
-  const url = `https://www.google.com/search?q=${encodeURIComponent(query)}&num=20&tbs=qdr:w`; // last week
-  const html = await fetchPage(url);
-  return html;
-}
-
-// ===== LinkedIn Guest API (no auth needed) =====
+// ===== LinkedIn Guest API (no auth needed, reliable links) =====
 async function fetchLinkedIn(keyword: string, location: string): Promise<string> {
   const url = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(location)}&start=0&f_TPR=r604800`;
-  return fetchPage(url);
-}
-
-// ===== 搜狗微信搜索 (covers all WeChat public accounts) =====
-async function fetchSogouWeixin(query: string): Promise<string> {
-  const url = `https://weixin.sogou.com/weixin?type=2&query=${encodeURIComponent(query)}&ie=utf8`;
   return fetchPage(url);
 }
 
@@ -107,65 +93,40 @@ interface JobSource {
   fetcher: () => Promise<ParsedJob[]>;
 }
 
+// Job listings ONLY from LinkedIn (reliable links + accurate location)
+// Google/Sogou moved to intel engine for news/timeline/面经
 const SOURCES: JobSource[] = [
-  // ========== CHINA (全网聚合) ==========
-  // Google搜索覆盖Boss直聘、猎聘、拉勾、脉脉等所有平台
+  // ========== CHINA ==========
   {
-    name: "Google-CN-咨询实习",
+    name: "LinkedIn-CN-Consulting",
     region: "CN",
     fetcher: async () => {
-      const html = await googleSearch("咨询 实习 2026 site:zhipin.com OR site:liepin.com OR site:shixiseng.com OR site:nowcoder.com");
-      return parseWithDeepSeek(html, "全网搜索", "CN", "从Google搜索结果中提取岗位信息。每条结果可能包含title和snippet。");
+      const html = await fetchLinkedIn("consulting analyst", "China");
+      return parseWithDeepSeek(html, "LinkedIn", "CN", "提取LinkedIn job cards。location必须在中国境内。");
     },
   },
   {
-    name: "Google-CN-投行校招",
+    name: "LinkedIn-CN-Finance",
     region: "CN",
     fetcher: async () => {
-      const html = await googleSearch("投行 校招 2026 site:zhipin.com OR site:liepin.com OR site:nowcoder.com");
-      return parseWithDeepSeek(html, "全网搜索", "CN", "从Google搜索结果中提取岗位信息。");
+      const html = await fetchLinkedIn("investment banking analyst", "China");
+      return parseWithDeepSeek(html, "LinkedIn", "CN", "提取LinkedIn job cards。location必须在中国境内。");
     },
   },
   {
-    name: "Google-CN-战略咨询",
+    name: "LinkedIn-CN-Strategy",
     region: "CN",
     fetcher: async () => {
-      const html = await googleSearch("MBB BCG McKinsey Bain 招聘 2026 中国");
-      return parseWithDeepSeek(html, "全网搜索", "CN", "从Google搜索结果提取MBB咨询公司最新招聘信息。");
-    },
-  },
-  // 公众号（通过搜狗微信搜索）
-  {
-    name: "微信公众号-咨询实习",
-    region: "CN",
-    fetcher: async () => {
-      const html = await fetchSogouWeixin("咨询 实习 招聘 2026");
-      return parseWithDeepSeek(html, "公众号", "CN", "从搜狗微信搜索结果中提取公众号文章里的招聘信息。文章标题和摘要中可能包含岗位信息。");
+      const html = await fetchLinkedIn("strategy analyst", "China");
+      return parseWithDeepSeek(html, "LinkedIn", "CN", "提取LinkedIn job cards。location必须在中国境内。");
     },
   },
   {
-    name: "微信公众号-投行招聘",
+    name: "LinkedIn-CN-MBB",
     region: "CN",
     fetcher: async () => {
-      const html = await fetchSogouWeixin("投行 校招 春招 2026");
-      return parseWithDeepSeek(html, "公众号", "CN");
-    },
-  },
-  // 直接抓实习僧和牛客
-  {
-    name: "实习僧-咨询",
-    region: "CN",
-    fetcher: async () => {
-      const html = await fetchPage("https://www.shixiseng.com/interns?keyword=%E5%92%A8%E8%AF%A2&city=all&type=intern");
-      return parseWithDeepSeek(html, "实习僧", "CN");
-    },
-  },
-  {
-    name: "实习僧-投行",
-    region: "CN",
-    fetcher: async () => {
-      const html = await fetchPage("https://www.shixiseng.com/interns?keyword=%E6%8A%95%E8%A1%8C&city=all&type=intern");
-      return parseWithDeepSeek(html, "实习僧", "CN");
+      const html = await fetchLinkedIn("McKinsey BCG Bain", "China");
+      return parseWithDeepSeek(html, "LinkedIn", "CN", "提取LinkedIn job cards。只要MBB三家。location必须在中国境内。");
     },
   },
 
@@ -175,7 +136,7 @@ const SOURCES: JobSource[] = [
     region: "UK",
     fetcher: async () => {
       const html = await fetchLinkedIn("consulting graduate analyst", "United Kingdom");
-      return parseWithDeepSeek(html, "LinkedIn", "UK", "提取LinkedIn job cards中的职位信息。");
+      return parseWithDeepSeek(html, "LinkedIn", "UK", "location必须在英国。");
     },
   },
   {
@@ -183,15 +144,15 @@ const SOURCES: JobSource[] = [
     region: "UK",
     fetcher: async () => {
       const html = await fetchLinkedIn("investment banking analyst graduate", "United Kingdom");
-      return parseWithDeepSeek(html, "LinkedIn", "UK");
+      return parseWithDeepSeek(html, "LinkedIn", "UK", "location必须在英国。");
     },
   },
   {
-    name: "Google-UK-Consulting",
+    name: "LinkedIn-UK-Strategy",
     region: "UK",
     fetcher: async () => {
-      const html = await googleSearch("consulting graduate scheme 2026 UK site:targetjobs.co.uk OR site:gradcracker.com OR site:brightnetwork.co.uk");
-      return parseWithDeepSeek(html, "UK求职网站", "UK");
+      const html = await fetchLinkedIn("strategy consultant graduate", "United Kingdom");
+      return parseWithDeepSeek(html, "LinkedIn", "UK", "location必须在英国。");
     },
   },
 
@@ -201,23 +162,23 @@ const SOURCES: JobSource[] = [
     region: "US",
     fetcher: async () => {
       const html = await fetchLinkedIn("management consulting analyst", "United States");
-      return parseWithDeepSeek(html, "LinkedIn", "US");
+      return parseWithDeepSeek(html, "LinkedIn", "US", "location必须在美国。");
     },
   },
   {
     name: "LinkedIn-US-IB",
     region: "US",
     fetcher: async () => {
-      const html = await fetchLinkedIn("investment banking analyst summer", "United States");
-      return parseWithDeepSeek(html, "LinkedIn", "US");
+      const html = await fetchLinkedIn("investment banking analyst", "United States");
+      return parseWithDeepSeek(html, "LinkedIn", "US", "location必须在美国。");
     },
   },
   {
-    name: "Google-US-Consulting",
+    name: "LinkedIn-US-Strategy",
     region: "US",
     fetcher: async () => {
-      const html = await googleSearch("consulting analyst 2026 hiring McKinsey BCG Bain site:wayup.com OR site:glassdoor.com");
-      return parseWithDeepSeek(html, "US求职网站", "US");
+      const html = await fetchLinkedIn("strategy consulting analyst", "United States");
+      return parseWithDeepSeek(html, "LinkedIn", "US", "location必须在美国。");
     },
   },
 
@@ -227,7 +188,7 @@ const SOURCES: JobSource[] = [
     region: "HK",
     fetcher: async () => {
       const html = await fetchLinkedIn("consulting analyst", "Hong Kong");
-      return parseWithDeepSeek(html, "LinkedIn", "HK");
+      return parseWithDeepSeek(html, "LinkedIn", "HK", "location必须在香港。");
     },
   },
   {
@@ -235,15 +196,7 @@ const SOURCES: JobSource[] = [
     region: "HK",
     fetcher: async () => {
       const html = await fetchLinkedIn("investment banking analyst", "Hong Kong");
-      return parseWithDeepSeek(html, "LinkedIn", "HK");
-    },
-  },
-  {
-    name: "Google-HK-Jobs",
-    region: "HK",
-    fetcher: async () => {
-      const html = await googleSearch("consulting finance graduate 2026 Hong Kong site:jobsdb.com OR site:cpjobs.com");
-      return parseWithDeepSeek(html, "HK求职网站", "HK");
+      return parseWithDeepSeek(html, "LinkedIn", "HK", "location必须在香港。");
     },
   },
 
@@ -257,11 +210,11 @@ const SOURCES: JobSource[] = [
     },
   },
   {
-    name: "Google-SG-Jobs",
+    name: "LinkedIn-SG-Strategy",
     region: "SG",
     fetcher: async () => {
-      const html = await googleSearch("consulting finance graduate 2026 Singapore site:mycareersfuture.gov.sg");
-      return parseWithDeepSeek(html, "SG求职网站", "SG");
+      const html = await fetchLinkedIn("strategy consulting analyst", "Singapore");
+      return parseWithDeepSeek(html, "LinkedIn", "SG", "location必须在新加坡。");
     },
   },
 ];
