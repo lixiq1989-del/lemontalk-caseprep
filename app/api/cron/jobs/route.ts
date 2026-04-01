@@ -73,7 +73,11 @@ ${content.slice(0, 10000)}`;
     const text = data.choices?.[0]?.message?.content || "[]";
     const match = text.match(/\[[\s\S]*\]/);
     if (!match) return [];
-    return (JSON.parse(match[0]) as ParsedJob[]).map((j) => ({ ...j, region, source: sourceName }));
+    const jobs = JSON.parse(match[0]) as ParsedJob[];
+    // Validate: reject jobs with empty/fake links
+    return jobs
+      .filter((j) => j.link && j.link.startsWith("http") && !j.link.includes("example.com"))
+      .map((j) => ({ ...j, region, source: sourceName }));
   } catch {
     return [];
   }
@@ -85,18 +89,12 @@ async function fetchLinkedIn(keyword: string, location: string): Promise<string>
   return fetchPage(url);
 }
 
-// ===== Company career pages (most authoritative) =====
+// ===== Company career pages (only ones that return real data) =====
 const CAREER_PAGES: { name: string; region: string; url: string; instructions: string }[] = [
-  // MBB
-  { name: "McKinsey-CN", region: "CN", url: "https://www.mckinsey.com/careers/search-results?functions=Consulting&locations=Greater%20China", instructions: "提取McKinsey中国区咨询岗位。link格式应为mckinsey.com/careers开头。" },
-  { name: "McKinsey-UK", region: "UK", url: "https://www.mckinsey.com/careers/search-results?functions=Consulting&locations=United%20Kingdom", instructions: "提取McKinsey英国岗位。" },
-  { name: "BCG-Careers", region: "CN", url: "https://careers.bcg.com/search?query=consultant&location=china", instructions: "提取BCG中国区岗位。link应为careers.bcg.com开头。" },
-  { name: "Bain-Careers", region: "CN", url: "https://www.bain.com/careers/find-a-role/?query=consultant&locations=greater-china", instructions: "提取Bain中国区岗位。link应为bain.com/careers开头。" },
-  // Big4
-  { name: "Deloitte-CN", region: "CN", url: "https://apply.deloitte.com/careers/SearchJobs/?143=%5B7843%5D&143_format=6164&listFilterMode=1", instructions: "提取Deloitte中国区咨询/战略岗位。" },
-  // Investment Banks
-  { name: "GoldmanSachs-APAC", region: "HK", url: "https://www.goldmansachs.com/careers/students/programs/asia-pacific/", instructions: "提取Goldman Sachs亚太区学生项目和岗位。" },
-  { name: "MorganStanley-APAC", region: "HK", url: "https://www.morganstanley.com/careers/students-graduates/programs", instructions: "提取Morgan Stanley学生/毕业生项目。" },
+  // Only Bain returns real HTML with job data; others are SPAs or 404
+  { name: "Bain-CN", region: "CN", url: "https://www.bain.com/careers/find-a-role/?query=consultant&locations=greater-china", instructions: "提取Bain中国区岗位。link必须以bain.com开头。不要编造链接。" },
+  { name: "Bain-UK", region: "UK", url: "https://www.bain.com/careers/find-a-role/?query=consultant&locations=united-kingdom", instructions: "提取Bain英国岗位。link必须以bain.com开头。" },
+  { name: "Bain-US", region: "US", url: "https://www.bain.com/careers/find-a-role/?query=consultant&locations=north-america", instructions: "提取Bain北美岗位。link必须以bain.com开头。" },
 ];
 
 // ===== Source definitions =====
