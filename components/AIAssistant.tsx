@@ -142,15 +142,56 @@ export default function AIAssistant() {
   }, [router]);
 
   // Parse AI response for embedded actions [ACTION:type:payload]
-  function parseResponse(text: string): { cleanText: string; action?: PageAction } {
+  function parseResponse(text: string, userInput: string): { cleanText: string; action?: PageAction } {
+    // Check for explicit action tags from AI
     const actionMatch = text.match(/\[ACTION:(\w+):([^\]]+)\]/);
     if (actionMatch) {
-      const cleanText = text.replace(/\[ACTION:[^\]]+\]/, "").trim();
+      const cleanText = text.replace(/\[ACTION:[^\]]+\]/g, "").trim();
       return {
         cleanText,
         action: { type: actionMatch[1] as PageAction["type"], payload: actionMatch[2] },
       };
     }
+
+    // Fallback: detect intent from user input if AI didn't add action
+    const input = userInput.toLowerCase();
+    if (input.includes("练") && input.includes("框架") || input.includes("structuring")) {
+      return { cleanText: text, action: { type: "start_drill", payload: "structuring" } };
+    }
+    if (input.includes("练") && (input.includes("计算") || input.includes("math"))) {
+      return { cleanText: text, action: { type: "start_drill", payload: "case_math" } };
+    }
+    if (input.includes("练") && (input.includes("图表") || input.includes("chart"))) {
+      return { cleanText: text, action: { type: "start_drill", payload: "chart" } };
+    }
+    if (input.includes("练") && (input.includes("头脑") || input.includes("创意") || input.includes("brainstorm"))) {
+      return { cleanText: text, action: { type: "start_drill", payload: "creativity" } };
+    }
+    if (input.includes("练") && (input.includes("总结") || input.includes("推荐") || input.includes("synthesis"))) {
+      return { cleanText: text, action: { type: "start_drill", payload: "synthesis" } };
+    }
+    if (input.includes("模拟面试") || input.includes("mock")) {
+      return { cleanText: text, action: { type: "navigate", payload: "/ai/mock" } };
+    }
+    if (input.includes("pei") || input.includes("行为面试")) {
+      return { cleanText: text, action: { type: "navigate", payload: "/ai/pei" } };
+    }
+    if ((input.includes("英国") || input.includes("uk")) && input.includes("岗位")) {
+      return { cleanText: text, action: { type: "navigate", payload: "/jobs?region=UK" } };
+    }
+    if ((input.includes("美国") || input.includes("us")) && input.includes("岗位")) {
+      return { cleanText: text, action: { type: "navigate", payload: "/jobs?region=US" } };
+    }
+    if ((input.includes("香港") || input.includes("hk")) && input.includes("岗位")) {
+      return { cleanText: text, action: { type: "navigate", payload: "/jobs?region=HK" } };
+    }
+    if ((input.includes("国内") || input.includes("中国")) && input.includes("岗位")) {
+      return { cleanText: text, action: { type: "navigate", payload: "/jobs?region=CN" } };
+    }
+    if (input.includes("开始") && input.includes("练")) {
+      return { cleanText: text, action: { type: "navigate", payload: "/drill" } };
+    }
+
     return { cleanText: text };
   }
 
@@ -163,29 +204,19 @@ export default function AIAssistant() {
     setLoading(true);
 
     try {
-      const actionInstructions = `
-
-如果用户的问题暗示需要页面操作，在回复末尾加上一个action标签（用户看不到）：
-- 用户想练某类题 → [ACTION:start_drill:structuring] 或 [ACTION:start_drill:chart] 等
-- 用户想看某地区岗位 → [ACTION:navigate:/jobs?region=CN] 或 UK/US/HK/SG
-- 用户想筛选内容 → [ACTION:filter:值]
-- 用户表达了偏好（目标公司/薄弱项）→ [ACTION:set_preference:target_firm=MBB] 或 [ACTION:set_preference:weakness=structuring]
-
-只在明确需要时加action，不要每条都加。action标签放在回复最后一行。`;
-
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "qa",
-          message: `[页面: ${pathname}] [上下文: ${context}]${user ? ` [用户已登录]` : ""}${actionInstructions}\n\n${text.trim()}`,
+          message: `[页面: ${pathname}] [上下文: ${context}]${user ? ` [用户已登录]` : ""}\n\n${text.trim()}`,
           history: messages.slice(-8),
         }),
       });
 
       const data = await res.json();
       const rawResponse = data.response || "抱歉，请重试。";
-      const { cleanText, action } = parseResponse(rawResponse);
+      const { cleanText, action } = parseResponse(rawResponse, text.trim());
 
       const aiMsg: Message = { role: "ai", text: cleanText, action };
       setMessages((prev) => [...prev, aiMsg]);
