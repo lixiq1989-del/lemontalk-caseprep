@@ -216,11 +216,11 @@ export default function JobsModule({ initialFilter, initialRegion }: JobsModuleP
                   {!isExpired && job.link && (
                     <a
                       href={job.link}
-                      target="_blank"
+                      target={job.link.startsWith("mailto:") ? "_self" : "_blank"}
                       rel="noopener noreferrer"
                       className="shrink-0 px-4 py-2 bg-[#051C2C] text-white rounded-lg text-sm font-medium hover:bg-[#0A2E4A] transition-colors"
                     >
-                      投递
+                      {job.link.startsWith("mailto:") ? "发邮件" : "投递"}
                     </a>
                   )}
                 </div>

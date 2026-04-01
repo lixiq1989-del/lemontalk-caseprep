@@ -27,8 +27,11 @@ interface IntelSignal {
   tags: string[];
   raw_snippet: string;
   // Recruiting process tracking
-  process_stage?: string;   // "网申开放" | "笔试中" | "一面" | "二面" | "终面" | "发offer" | "已结束"
-  process_date?: string;    // when this stage happened/starts
+  process_stage?: string;
+  process_date?: string;
+  // Apply info from WeChat/公众号
+  apply_email?: string;
+  apply_link?: string;
 }
 
 // ===== Search helpers =====
@@ -101,6 +104,8 @@ ${content.slice(0, 10000)}
   "content": "AI整理的情报摘要（1-3句话，中文）",
   "source_url": "原文链接（从搜索结果提取，无则空）",
   "source_platform": "来源平台（小红书/公众号/脉脉/牛客/LinkedIn/新闻/官网/论坛）",
+  "apply_email": "投递邮箱（如果原文中提到了hr邮箱/投递邮箱，提取出来，如hr@mckinsey.com，无则空）",
+  "apply_link": "投递链接（如果原文中有申请链接/网申链接，提取出来，无则空）",
   "deadline": "截止日期YYYY-MM-DD（无则空）",
   "confidence": 数字0-100,
   "tags": ["标签数组"],
@@ -115,6 +120,8 @@ ${content.slice(0, 10000)}
 - 招聘流程进度是最有价值的信息——优先提取
 - 面试经验中如果提到了具体case题目/面试形式，一定要写进content
 - source_url尽量从搜索结果中提取原文链接
+- apply_email：特别注意公众号文章里经常有"投递邮箱：hr@xxx.com"这种信息，一定要提取
+- apply_link：如果原文里有网申链接/申请链接，提取出来
 - 过滤掉广告、培训机构推销
 - 每条情报必须有明确的公司名
 - 最多返回15条
@@ -323,22 +330,33 @@ export async function GET(request: NextRequest) {
   // Sort by confidence descending
   unique.sort((a, b) => b.confidence - a.confidence);
 
-  // Upsert to Supabase jobs table (convert signals to job format)
+  // Upsert to Supabase jobs table
+  // Include job_postings that have apply_link OR apply_email (not just source_url)
   const jobRows = unique
     .filter((s) => s.type === "job_posting" && s.confidence >= 70)
-    .map((s) => ({
-      title: s.role || "Unknown Role",
-      company: s.company,
-      location: s.location || "",
-      type: s.tags?.includes("实习") || s.tags?.includes("intern") ? "实习" : "Graduate",
-      deadline: s.deadline || "",
-      link: s.source_url || "",
-      description: s.content,
-      tags: s.tags || [],
-      region: s.region,
-      source: `AI情报: ${s.source_platform}`,
-      active: true,
-    }));
+    .filter((s) => s.apply_link || s.apply_email || s.source_url) // must have some way to apply
+    .map((s) => {
+      // Build apply link: prefer apply_link > source_url > mailto:email
+      let link = s.apply_link || s.source_url || "";
+      let description = s.content;
+      if (s.apply_email) {
+        description += `\n投递邮箱: ${s.apply_email}`;
+        if (!link) link = `mailto:${s.apply_email}`;
+      }
+      return {
+        title: s.role || "Unknown Role",
+        company: s.company,
+        location: s.location || "",
+        type: s.tags?.includes("实习") || s.tags?.includes("intern") ? "实习" : "Graduate",
+        deadline: s.deadline || "",
+        link,
+        description,
+        tags: s.tags || [],
+        region: s.region,
+        source: `AI情报: ${s.source_platform}`,
+        active: true,
+      };
+    });
 
   if (jobRows.length > 0) {
     try {
