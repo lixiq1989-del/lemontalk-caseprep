@@ -45,14 +45,16 @@ async function parseWithDeepSeek(content: string, sourceName: string, region: st
   const prompt = `从以下内容中提取招聘信息。只提取咨询/金融/战略/管理类岗位。返回JSON数组。
 
 每条字段：
-- title: 职位名称
+- title: 职位名称（具体到岗位+级别，如"Business Analyst 暑期实习"而非泛泛的"咨询"）
 - company: 公司名称
-- location: 城市
+- location: 城市（具体到城市，如"上海"/"London"而非"中国"）
 - type: "实习"/"校招"/"社招"/"Internship"/"Graduate"/"Full-time"
 - deadline: 截止日期YYYY-MM-DD（无则""）
-- link: 原链接（无则""）
-- description: 1-2句描述
+- link: 投递链接（必须是可点击的完整URL，如公司官网申请页或LinkedIn岗位详情页。没有链接的岗位不要）
+- description: 1-2句描述（包含：招聘通道如全球/亚洲/欧洲、具体要求、薪资如有）
 - tags: 标签数组
+
+重要：link字段是必填的！没有投递链接的岗位请跳过不提取。
 ${instructions}
 
 最多15条。无招聘信息返回[]。只返回JSON数组。
