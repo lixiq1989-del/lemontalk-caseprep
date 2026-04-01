@@ -86,7 +86,13 @@ ${content.slice(0, 10000)}`;
 // ===== LinkedIn Guest API (no auth needed, reliable links) =====
 async function fetchLinkedIn(keyword: string, location: string): Promise<string> {
   const url = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(location)}&start=0&f_TPR=r604800`;
-  return fetchPage(url);
+  const html = await fetchPage(url);
+  // Pre-extract real LinkedIn job URLs from HTML to help DeepSeek
+  // LinkedIn cards have: data-entity-urn="urn:li:jobPosting:12345" and links like /jobs/view/12345
+  const jobUrls = [...html.matchAll(/href="(https:\/\/[a-z]{2}\.linkedin\.com\/jobs\/view\/[^"]+)"/g)].map(m => m[1]);
+  if (jobUrls.length === 0) return html;
+  // Append extracted URLs as a hint
+  return html + "\n\n--- VERIFIED LINKEDIN URLS ---\n" + jobUrls.join("\n");
 }
 
 // ===== Company career pages (only ones that return real data) =====
@@ -117,33 +123,40 @@ const SOURCES: JobSource[] = [
     },
   })),
 
-  // ========== 实习僧 (China internships) ==========
+  // ========== LinkedIn (global, reliable links from HTML) ==========
+  // Extra CN queries to compensate for no 实习僧/Boss直聘
   {
-    name: "实习僧-咨询",
+    name: "LinkedIn-CN-MBB",
     region: "CN",
     fetcher: async () => {
-      const html = await fetchPage("https://www.shixiseng.com/interns?keyword=%E5%92%A8%E8%AF%A2&city=all&type=intern");
-      return parseWithDeepSeek(html, "实习僧", "CN", "link格式为shixiseng.com开头。");
+      const html = await fetchLinkedIn("McKinsey BCG Bain", "China");
+      return parseWithDeepSeek(html, "LinkedIn", "CN", "只要MBB三家的岗位。location必须在中国境内。link必须是linkedin.com开头。");
     },
   },
   {
-    name: "实习僧-投行",
+    name: "LinkedIn-CN-Big4",
     region: "CN",
     fetcher: async () => {
-      const html = await fetchPage("https://www.shixiseng.com/interns?keyword=%E6%8A%95%E8%A1%8C&city=all&type=intern");
-      return parseWithDeepSeek(html, "实习僧", "CN", "link格式为shixiseng.com开头。");
+      const html = await fetchLinkedIn("Deloitte PwC EY KPMG consulting", "China");
+      return parseWithDeepSeek(html, "LinkedIn", "CN", "只要四大咨询岗位。location必须在中国境内。");
     },
   },
   {
-    name: "实习僧-战略",
+    name: "LinkedIn-CN-IB",
     region: "CN",
     fetcher: async () => {
-      const html = await fetchPage("https://www.shixiseng.com/interns?keyword=%E6%88%98%E7%95%A5&city=all&type=intern");
-      return parseWithDeepSeek(html, "实习僧", "CN", "link格式为shixiseng.com开头。");
+      const html = await fetchLinkedIn("investment banking CICC Goldman Morgan", "China");
+      return parseWithDeepSeek(html, "LinkedIn", "CN", "只要投行岗位。location必须在中国境内。");
     },
   },
-
-  // ========== LinkedIn (global, reliable links) ==========
+  {
+    name: "LinkedIn-CN-Internet",
+    region: "CN",
+    fetcher: async () => {
+      const html = await fetchLinkedIn("strategy analyst ByteDance Tencent Alibaba", "China");
+      return parseWithDeepSeek(html, "LinkedIn", "CN", "只要互联网战略/商业分析岗位。location必须在中国境内。");
+    },
+  },
   {
     name: "LinkedIn-CN-Consulting",
     region: "CN",
