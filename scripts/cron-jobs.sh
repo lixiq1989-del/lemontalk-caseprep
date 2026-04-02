@@ -77,8 +77,23 @@ async function upsertJobs(jobs) {
 (async () => {
   const allJobs = [];
 
-  // LinkedIn - CN
-  for (const [name, kw] of [['MBB','McKinsey BCG Bain'],['Big4','Deloitte PwC EY KPMG consulting'],['IB','investment banking Goldman CICC'],['Internet','strategy analyst ByteDance Tencent Alibaba'],['Consulting','consulting analyst'],['Finance','investment banking analyst'],['Strategy','strategy analyst']]) {
+  // LinkedIn - CN (99 companies grouped by category)
+  for (const [name, kw] of [
+    ['MBB','McKinsey BCG Bain consultant'],
+    ['Big4','Deloitte PwC EY KPMG consulting strategy'],
+    ['Strategy','Roland Berger Kearney Oliver Wyman LEK Simon-Kucher'],
+    ['IB-Global','Goldman Sachs Morgan Stanley JP Morgan UBS Citi HSBC investment banking'],
+    ['IB-China','CICC CITIC Securities Huatai Guotai Junan analyst'],
+    ['PE-VC','KKR Blackstone Carlyle Apollo Bain Capital analyst'],
+    ['Tech-BAT','ByteDance Tencent Alibaba strategy analyst'],
+    ['Tech-More','Meituan PDD JD.com Xiaomi Baidu NetEase strategy'],
+    ['Tech-New','Kuaishou Xiaohongshu DiDi Bilibili Ant Group SHEIN strategy'],
+    ['Auto-EV','BYD CATL Tesla NIO Li Auto XPeng strategy analyst'],
+    ['Tech-Global','Microsoft Google Amazon Apple Meta strategy analyst'],
+    ['Consumer','Procter Gamble Unilever Nike LVMH Mars management trainee'],
+    ['Consumer-CN','Anta Pop Mart Genki Forest Dyson Coca-Cola strategy'],
+    ['Finance-CN','Ping An China Merchants Bank analyst strategy'],
+  ]) {
     console.log('  LinkedIn-CN-' + name);
     const html = await fetchLinkedIn(kw, 'China');
     const jobs = await parseJobs(html, 'LinkedIn', 'CN', 'location必须在中国境内。');
