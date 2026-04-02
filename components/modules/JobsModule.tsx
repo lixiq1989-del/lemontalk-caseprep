@@ -86,10 +86,12 @@ export default function JobsModule({ initialFilter, initialRegion }: JobsModuleP
     return daysUntil(a.deadline) - daysUntil(b.deadline);
   });
 
-  // Count per region
+  // Count per region (based on active tab)
   const regionCounts: Record<string, number> = {};
-  for (const j of jobs) {
-    regionCounts[j.region] = (regionCounts[j.region] || 0) + 1;
+  const countSource = tab === "intel" ? intel : jobs;
+  for (const item of countSource) {
+    const r = item.region || "?";
+    regionCounts[r] = (regionCounts[r] || 0) + 1;
   }
 
   return (
@@ -124,7 +126,7 @@ export default function JobsModule({ initialFilter, initialRegion }: JobsModuleP
       {/* Region filter */}
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
         {REGIONS.map((r) => {
-          const count = r.key === "all" ? jobs.length : (regionCounts[r.key] || 0);
+          const count = r.key === "all" ? countSource.length : (regionCounts[r.key] || 0);
           return (
             <button
               key={r.key}
