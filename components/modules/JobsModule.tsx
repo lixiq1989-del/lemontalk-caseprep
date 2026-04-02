@@ -118,14 +118,6 @@ export default function JobsModule({ initialFilter, initialRegion }: JobsModuleP
           岗位列表
         </button>
         <button
-          onClick={() => setTab("companies")}
-          className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${
-            tab === "companies" ? "bg-white text-[#051C2C] shadow-sm" : "text-muted"
-          }`}
-        >
-          公司官网 <span className="text-xs ml-0.5 text-muted">{companies.length}</span>
-        </button>
-        <button
           onClick={() => setTab("intel")}
           className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${
             tab === "intel" ? "bg-white text-[#051C2C] shadow-sm" : "text-muted"
