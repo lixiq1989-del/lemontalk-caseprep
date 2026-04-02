@@ -115,7 +115,7 @@ async function fetchPage(url) {
 
 async function extractIntel(content, context, region) {
   if (!content || content.length < 100) return [];
-  const prompt = '你是招聘情报分析师。提取咨询/金融/战略相关的招聘情报。返回JSON数组。\\n每条: type(job_posting/hiring_news/process_update/timeline/interview_exp/referral), company, role, location, region, content(中文摘要), source_url, source_platform(小红书/公众号/脉脉/牛客/LinkedIn/新闻), apply_email(投递邮箱如有), apply_link(申请链接如有), deadline, confidence(0-100), tags, raw_snippet, process_stage(网申开放/笔试中/一面/二面/终面/发offer), process_date\\n特别注意公众号里的投递邮箱(hr@xxx.com)！\\n最多15条。只返回JSON。\\n搜索:' + context + '\\n' + content.slice(0,10000);
+  const prompt = '你是招聘情报分析师。从搜索结果中提取咨询/金融/战略相关的招聘情报。\\n\\n严格规则：\\n- 只提取原文中明确写到的信息，绝对不要推测、补充或编造任何内容\\n- content字段必须是原文的忠实摘要，不要添加原文没有的信息\\n- 如果原文只是提到了公司名但没有具体招聘信息，不要提取\\n- 如果不确定某条信息是否真实，降低confidence或直接跳过\\n- raw_snippet必须是原文的直接引用\\n\\n返回JSON数组。每条: type(job_posting/hiring_news/process_update/timeline/interview_exp/referral), company, role, location, region, content(原文忠实摘要), source_url, source_platform(小红书/公众号/脉脉/牛客/LinkedIn/新闻), apply_email(原文中的投递邮箱), apply_link(原文中的申请链接), deadline, confidence(0-100), tags, raw_snippet(原文直接引用20-50字), process_stage, process_date\\n最多15条。只返回JSON。\\n搜索:' + context + '\\n' + content.slice(0,10000);
   try {
     const r = await fetch('https://api.deepseek.com/chat/completions', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+DEEPSEEK_KEY}, body:JSON.stringify({model:'deepseek-chat',messages:[{role:'user',content:prompt}],temperature:0.2,max_tokens:4000}) });
     const d = await r.json();

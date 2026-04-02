@@ -73,7 +73,14 @@ async function linkedInJobs(keyword: string, location: string): Promise<string> 
 async function extractIntelligence(content: string, searchContext: string, region: string): Promise<IntelSignal[]> {
   if (!content || content.length < 100) return [];
 
-  const prompt = `你是一个招聘情报分析师。从以下搜索结果中提取所有与咨询/金融/战略岗位相关的招聘情报。
+  const prompt = `你是一个招聘情报分析师。从以下搜索结果中提取招聘情报。
+
+严格规则：
+- 只提取原文中明确写到的信息，绝对不要推测、补充或编造
+- content必须是原文的忠实摘要，不要添加原文没有的信息
+- 如果原文只提到公司名但没有具体招聘信息，不要提取
+- raw_snippet必须是原文的直接引用
+- 不确定的信息降低confidence或跳过
 
 搜索上下文：${searchContext}
 地区：${region}
