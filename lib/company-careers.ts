@@ -77,6 +77,32 @@ export const COMPANIES: CompanyInfo[] = [
   { name: "理想汽车", category: "Tech_China", careerUrl: "https://www.lixiang.com/employ/", linkedInName: "Li Auto" },
   { name: "小鹏汽车", category: "Tech_China", careerUrl: "https://www.xiaopeng.com/join.html", linkedInName: "XPeng" },
 
+  // ===== New Energy / Auto =====
+  { name: "蔚来", category: "Tech_China", careerUrl: "https://www.nio.cn/careers", campusUrl: "https://campus.nio.com/", linkedInName: "NIO" },
+  { name: "理想汽车", category: "Tech_China", careerUrl: "https://www.lixiang.com/employ/", linkedInName: "Li Auto" },
+  { name: "小鹏汽车", category: "Tech_China", careerUrl: "https://www.xiaopeng.com/join.html", linkedInName: "XPeng" },
+  { name: "比亚迪", category: "Tech_China", careerUrl: "https://hr.byd.com/", linkedInName: "BYD" },
+  { name: "宁德时代", category: "Tech_China", careerUrl: "https://www.catl.com/careers/", linkedInName: "CATL" },
+  { name: "特斯拉中国", category: "Tech_China", careerUrl: "https://www.tesla.cn/careers", linkedInName: "Tesla" },
+  { name: "吉利汽车", category: "Tech_China", careerUrl: "https://careers.geely.com/", linkedInName: "Geely" },
+  { name: "零跑汽车", category: "Tech_China", careerUrl: "https://www.leapmotor.com/joinus.html", linkedInName: "Leapmotor" },
+  { name: "哪吒汽车", category: "Tech_China", careerUrl: "https://www.hozonauto.com/join.html", linkedInName: "Hozon Auto" },
+
+  // ===== More Tech / Platform =====
+  { name: "微软中国", category: "Tech_Global", careerUrl: "https://careers.microsoft.com/", linkedInName: "Microsoft" },
+  { name: "Google", category: "Tech_Global", careerUrl: "https://www.google.com/about/careers/", linkedInName: "Google" },
+  { name: "Amazon", category: "Tech_Global", careerUrl: "https://www.amazon.jobs/", linkedInName: "Amazon" },
+  { name: "Apple", category: "Tech_Global", careerUrl: "https://www.apple.com/careers/", linkedInName: "Apple" },
+  { name: "Meta", category: "Tech_Global", careerUrl: "https://www.metacareers.com/", linkedInName: "Meta" },
+  { name: "Shopee", category: "Tech_Global", careerUrl: "https://careers.shopee.com/", linkedInName: "Shopee" },
+  { name: "Grab", category: "Tech_Global", careerUrl: "https://grab.careers/", linkedInName: "Grab" },
+  { name: "SHEIN", category: "Tech_China", careerUrl: "https://careers.shein.com/", linkedInName: "SHEIN" },
+  { name: "米哈游", category: "Tech_China", careerUrl: "https://join.mihoyo.com/", linkedInName: "miHoYo" },
+  { name: "网易游戏", category: "Tech_China", careerUrl: "https://game.campus.163.com/", linkedInName: "NetEase Games" },
+  { name: "大疆", category: "Tech_China", careerUrl: "https://we.dji.com/", linkedInName: "DJI" },
+  { name: "商汤科技", category: "Tech_China", careerUrl: "https://www.sensetime.com/cn/careers", linkedInName: "SenseTime" },
+  { name: "科大讯飞", category: "Tech_China", careerUrl: "https://www.iflytek.com/jobs", linkedInName: "iFLYTEK" },
+
   // ===== Consumer/FMCG =====
   { name: "P&G", category: "Consumer", careerUrl: "https://www.pgcareers.com/", campusUrl: "https://www.pgcareers.com/global/en/recent-grads", linkedInName: "Procter & Gamble" },
   { name: "Unilever", category: "Consumer", careerUrl: "https://careers.unilever.com/en", linkedInName: "Unilever" },
@@ -85,6 +111,17 @@ export const COMPANIES: CompanyInfo[] = [
   { name: "LVMH", category: "Consumer", careerUrl: "https://www.lvmh.com/en/join-us/our-job-offers", linkedInName: "LVMH" },
   { name: "Mars", category: "Consumer", careerUrl: "https://careers.mars.com/global/en", linkedInName: "Mars" },
   { name: "Nestle", category: "Consumer", careerUrl: "https://www.nestle.com/jobs", linkedInName: "Nestle" },
+  { name: "可口可乐", category: "Consumer", careerUrl: "https://www.coca-colacompany.com/careers", linkedInName: "Coca-Cola" },
+  { name: "联合利华中国", category: "Consumer", careerUrl: "https://careers.unilever.com/", linkedInName: "Unilever China" },
+  { name: "戴森", category: "Consumer", careerUrl: "https://careers.dyson.com/", linkedInName: "Dyson" },
+  { name: "安踏", category: "Consumer", careerUrl: "https://hr.anta.com/", linkedInName: "ANTA Sports" },
+  { name: "泡泡玛特", category: "Consumer", careerUrl: "https://www.popmart.com/join", linkedInName: "Pop Mart" },
+  { name: "元气森林", category: "Consumer", careerUrl: "https://www.yuanqisenlin.com/", linkedInName: "Genki Forest" },
+
+  // ===== Real Estate / Finance (China) =====
+  { name: "中金公司", category: "IB_China", careerUrl: "https://cicc.zhiye.com/", linkedInName: "CICC" },
+  { name: "平安集团", category: "IB_China", careerUrl: "https://talent.pingan.com/", linkedInName: "Ping An" },
+  { name: "招商银行", category: "IB_China", careerUrl: "https://career.cmbchina.com/", linkedInName: "China Merchants Bank" },
 ];
 
 // LinkedIn search helper: build query from company names by category
