@@ -97,17 +97,49 @@ async function upsertJobs(jobs) {
     }
   }
 
-  // Bain career page
-  console.log('  Bain careers');
-  const bainHtml = await fetchPage('https://www.bain.com/careers/find-a-role/');
-  const bainJobs = await parseJobs(bainHtml, 'Bain官网', 'CN', 'link必须以bain.com开头。');
-  allJobs.push(...bainJobs);
+  // ========== Company career pages (9 that return real HTML) ==========
+  const careerPages = [
+    // MBB
+    { name: 'BCG', url: 'https://careers.bcg.com/global/en/search-results', region: 'CN', hint: 'link必须以careers.bcg.com开头。' },
+    // Big4
+    { name: 'EY', url: 'https://careers.ey.com/search/', region: 'CN', hint: 'link必须以careers.ey.com开头。只提取咨询/战略岗。' },
+    { name: 'Deloitte', url: 'https://apply.deloitte.com/careers/SearchJobs', region: 'US', hint: 'link必须以apply.deloitte.com开头。' },
+    // Strategy boutiques
+    { name: 'Roland Berger', url: 'https://careers.smartrecruiters.com/RolandBerger', region: 'CN', hint: 'link必须以smartrecruiters.com开头。' },
+    { name: 'Kearney', url: 'https://kearney.recsolu.com/job_boards/1', region: 'CN', hint: 'link必须以kearney.recsolu.com开头。' },
+    { name: 'Oliver Wyman', url: 'https://careers.marsh.com/global/en/oliver-wyman-search', region: 'CN', hint: 'link必须以careers.marsh.com开头。' },
+    { name: 'LEK', url: 'https://lek.tal.net/vx/lang-en-GB/mobile-0/appcentre-2/brand-2/candidate/jobboard/vacancy/3/adv/', region: 'CN', hint: 'link必须以lek.tal.net开头。' },
+    // PE
+    { name: 'Carlyle', url: 'https://carlyle.avature.net/externalcareers', region: 'US', hint: 'link必须以carlyle.avature.net开头。' },
+    // Tech
+    { name: 'Huawei', url: 'https://careers.smartrecruiters.com/HuaweiTechnologies2', region: 'CN', hint: 'link必须以smartrecruiters.com开头。' },
+  ];
 
-  // EY career page
-  console.log('  EY careers');
-  const eyHtml = await fetchPage('https://careers.ey.com/ey/search/?q=consulting&locationsearch=china');
-  const eyJobs = await parseJobs(eyHtml, 'EY官网', 'CN', 'link必须以careers.ey.com开头。');
-  allJobs.push(...eyJobs);
+  for (const cp of careerPages) {
+    console.log('  ' + cp.name + ' careers');
+    const html = await fetchPage(cp.url);
+    const jobs = await parseJobs(html, cp.name + '官网', cp.region, cp.hint);
+    allJobs.push(...jobs);
+    await new Promise(r => setTimeout(r, 2000));
+  }
+
+  // ========== 公众号实习信息（通过搜狗微信搜索）==========
+  // 魔都实习通、求职情报局、互联网校招等公众号
+  const weixinQueries = [
+    { name: '公众号-咨询实习', q: '咨询 实习 招聘 投递 2026', hint: '从公众号文章中提取岗位。如果有投递邮箱(hr@xxx.com)，link填mailto:邮箱。如果有网申链接，link填网申链接。没有任何投递方式的跳过。' },
+    { name: '公众号-投行实习', q: '投行 实习 日常实习 投递邮箱 2026', hint: '重点提取投递邮箱。link填mailto:邮箱。' },
+    { name: '公众号-互联网战略', q: '互联网 战略分析 商业分析 实习 招聘 2026', hint: '如有投递链接或邮箱则提取。' },
+    { name: '公众号-四大实习', q: 'Deloitte PwC EY KPMG 实习 招聘 2026', hint: '提取四大的实习岗位和投递方式。' },
+    { name: '公众号-魔都实习', q: '魔都实习 咨询 金融 战略 2026', hint: '提取实习信息和投递方式（邮箱或链接）。' },
+  ];
+
+  for (const wq of weixinQueries) {
+    console.log('  ' + wq.name);
+    const html = await sogouWeixin(wq.q);
+    const jobs = await parseJobs(html, wq.name, 'CN', wq.hint);
+    allJobs.push(...jobs);
+    await new Promise(r => setTimeout(r, 2000));
+  }
 
   console.log('Total jobs:', allJobs.length);
   await upsertJobs(allJobs);
