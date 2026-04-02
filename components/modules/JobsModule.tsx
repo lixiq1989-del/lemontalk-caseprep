@@ -58,16 +58,20 @@ export default function JobsModule({ initialFilter, initialRegion }: JobsModuleP
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState(initialFilter || "全部");
   const [regionFilter, setRegionFilter] = useState(initialRegion || "all");
-  const [tab, setTab] = useState<"jobs" | "intel">("jobs");
+  const [tab, setTab] = useState<"jobs" | "intel" | "companies">("jobs");
   const [intel, setIntel] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [companyCategoryFilter, setCompanyCategoryFilter] = useState("all");
 
   useEffect(() => {
     Promise.all([
       fetch("/api/jobs").then((r) => r.json()),
       fetch("/api/intel").then((r) => r.json()).catch(() => ({ intel: [] })),
-    ]).then(([jobsData, intelData]) => {
+      fetch("/api/company-careers").then((r) => r.json()).catch(() => ({ companies: [] })),
+    ]).then(([jobsData, intelData, companyData]) => {
       setJobs(jobsData.jobs || []);
       setIntel(intelData.intel || []);
+      setCompanies(companyData.companies || []);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -112,6 +116,14 @@ export default function JobsModule({ initialFilter, initialRegion }: JobsModuleP
           }`}
         >
           岗位列表
+        </button>
+        <button
+          onClick={() => setTab("companies")}
+          className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${
+            tab === "companies" ? "bg-white text-[#051C2C] shadow-sm" : "text-muted"
+          }`}
+        >
+          公司官网 <span className="text-xs ml-0.5 text-muted">{companies.length}</span>
         </button>
         <button
           onClick={() => setTab("intel")}
@@ -323,6 +335,89 @@ export default function JobsModule({ initialFilter, initialRegion }: JobsModuleP
                 );
               })
           )}
+        </div>
+      )}
+
+      {/* ===== COMPANIES TAB ===== */}
+      {tab === "companies" && (
+        <div>
+          {/* Category filter */}
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+            {[
+              { key: "all", label: "全部" },
+              { key: "MBB", label: "MBB" },
+              { key: "Strategy", label: "精品咨询" },
+              { key: "Big4", label: "四大" },
+              { key: "IB_Global", label: "国际投行" },
+              { key: "IB_China", label: "中国投行" },
+              { key: "PE_VC", label: "PE/VC" },
+              { key: "Tech_China", label: "互联网/科技" },
+              { key: "Tech_Global", label: "外资科技" },
+              { key: "Consumer", label: "消费品" },
+            ].map((cat) => (
+              <button
+                key={cat.key}
+                onClick={() => setCompanyCategoryFilter(cat.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                  companyCategoryFilter === cat.key ? "bg-[#051C2C] text-white" : "bg-gray-100 text-muted hover:bg-gray-200"
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {companies
+              .filter((c: any) => companyCategoryFilter === "all" || c.category === companyCategoryFilter)
+              .map((c: any, i: number) => {
+                const catLabels: Record<string, string> = {
+                  MBB: "MBB", Big4: "四大", Strategy: "精品咨询", IB_Global: "国际投行", IB_China: "中国投行",
+                  PE_VC: "PE/VC", Tech_China: "互联网/科技", Tech_Global: "外资科技", Consumer: "消费品",
+                };
+                const catColors: Record<string, string> = {
+                  MBB: "bg-[#051C2C]/10 text-[#051C2C]", Big4: "bg-[#00836E]/10 text-[#00836E]",
+                  Strategy: "bg-[#2251FF]/10 text-[#2251FF]", IB_Global: "bg-[#C4071B]/10 text-[#C4071B]",
+                  IB_China: "bg-[#C4071B]/10 text-[#C4071B]", PE_VC: "bg-[#007680]/10 text-[#007680]",
+                  Tech_China: "bg-[#E87722]/10 text-[#E87722]", Tech_Global: "bg-[#E87722]/10 text-[#E87722]",
+                  Consumer: "bg-[#FFB81C]/15 text-[#9A6B00]",
+                };
+                return (
+                  <div key={i} className="border border-border rounded-xl p-4 bg-white hover:border-[#051C2C]/20 transition-all">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${catColors[c.category] || "bg-gray-100 text-gray-600"}`}>
+                            {catLabels[c.category] || c.category}
+                          </span>
+                        </div>
+                        <h3 className="font-semibold text-sm">{c.name}</h3>
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        <a
+                          href={c.careerUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 bg-[#051C2C] text-white rounded-lg text-xs font-medium hover:bg-[#0A2E4A] transition-colors"
+                        >
+                          官网招聘
+                        </a>
+                        {c.campusUrl && (
+                          <a
+                            href={c.campusUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 border border-[#051C2C] text-[#051C2C] rounded-lg text-xs font-medium hover:bg-[#051C2C]/5 transition-colors"
+                          >
+                            校招
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
         </div>
       )}
     </div>
