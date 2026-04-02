@@ -93,6 +93,8 @@ async function upsertJobs(jobs) {
     ['Consumer','Procter Gamble Unilever Nike LVMH Mars management trainee'],
     ['Consumer-CN','Anta Pop Mart Genki Forest Dyson Coca-Cola strategy'],
     ['Finance-CN','Ping An China Merchants Bank analyst strategy'],
+    ['Intern-CN','暑期实习 summer intern strategy consulting China'],
+    ['Intern-Tech','ByteDance Tencent Alibaba Meituan intern summer 2026'],
   ]) {
     console.log('  LinkedIn-CN-' + name);
     const html = await fetchLinkedIn(kw, 'China');
@@ -138,14 +140,47 @@ async function upsertJobs(jobs) {
     await new Promise(r => setTimeout(r, 2000));
   }
 
+  // ========== 公司官网暑期实习（通过Google搜索site:域名）==========
+  const companySearches = [
+    { name: '字节暑期实习', q: 'site:jobs.bytedance.com 暑期实习 OR summer intern 2026', hint: 'link必须以jobs.bytedance.com开头。' },
+    { name: '腾讯暑期实习', q: 'site:join.qq.com 暑期实习 2026 OR site:careers.tencent.com intern', hint: 'link必须以join.qq.com或careers.tencent.com开头。' },
+    { name: '阿里暑期实习', q: 'site:talent.alibaba.com 暑期实习 OR 校招 2026', hint: 'link必须以talent.alibaba.com开头。' },
+    { name: '美团暑期实习', q: 'site:zhaopin.meituan.com OR site:campus.meituan.com 暑期实习 2026', hint: 'link必须以meituan.com开头。' },
+    { name: '京东暑期实习', q: 'site:campus.jd.com 暑期实习 2026', hint: 'link必须以campus.jd.com开头。' },
+    { name: '拼多多暑期实习', q: 'site:careers.pddglobalhr.com 暑期 OR intern 2026', hint: 'link必须以pddglobalhr.com开头。' },
+    { name: '小红书暑期实习', q: 'site:job.xiaohongshu.com OR site:campus.xiaohongshu.com 暑期实习 2026', hint: 'link必须以xiaohongshu.com开头。' },
+    { name: '快手暑期实习', q: 'site:zhaopin.kuaishou.cn OR site:campus.kuaishou.cn 暑期 2026', hint: 'link必须以kuaishou.cn开头。' },
+    { name: '华为暑期实习', q: 'site:career.huawei.com 暑期实习 OR 校招 2026', hint: 'link必须以career.huawei.com开头。' },
+    { name: '比亚迪暑期实习', q: 'site:hr.byd.com 暑期实习 OR 校招 2026', hint: 'link必须以hr.byd.com开头。' },
+    { name: '蔚来暑期实习', q: 'site:nio.com OR site:campus.nio.com 暑期实习 2026', hint: 'link必须以nio.com开头。' },
+    { name: '小米暑期实习', q: 'site:hr.xiaomi.com 暑期实习 OR 校招 2026', hint: 'link必须以hr.xiaomi.com开头。' },
+    { name: 'B站暑期实习', q: 'site:jobs.bilibili.com 暑期实习 2026', hint: 'link必须以jobs.bilibili.com开头。' },
+    { name: '大疆暑期实习', q: 'site:we.dji.com 暑期实习 OR 校招 2026', hint: 'link必须以we.dji.com开头。' },
+    { name: '网易暑期实习', q: 'site:hr.163.com OR site:campus.163.com 暑期实习 2026', hint: 'link必须以163.com开头。' },
+    { name: '滴滴暑期实习', q: 'site:talent.didiglobal.com 暑期实习 2026', hint: 'link必须以didiglobal.com开头。' },
+    { name: '米哈游暑期实习', q: 'site:join.mihoyo.com 暑期实习 2026', hint: 'link必须以join.mihoyo.com开头。' },
+    { name: 'SHEIN暑期实习', q: 'site:careers.shein.com intern OR 暑期 2026', hint: 'link必须以careers.shein.com开头。' },
+  ];
+
+  for (const cs of companySearches) {
+    console.log('  ' + cs.name);
+    const html = await googleSearch(cs.q);
+    const jobs = await parseJobs(html, cs.name, 'CN', cs.hint + ' 只提取原文中有的真实链接，不要编造。type填实习。');
+    allJobs.push(...jobs);
+    await new Promise(r => setTimeout(r, 2000));
+  }
+
   // ========== 公众号实习信息（通过搜狗微信搜索）==========
   // 魔都实习通、求职情报局、互联网校招等公众号
   const weixinQueries = [
     { name: '公众号-咨询实习', q: '咨询 实习 招聘 投递 2026', hint: '从公众号文章中提取岗位。如果有投递邮箱(hr@xxx.com)，link填mailto:邮箱。如果有网申链接，link填网申链接。没有任何投递方式的跳过。' },
     { name: '公众号-投行实习', q: '投行 实习 日常实习 投递邮箱 2026', hint: '重点提取投递邮箱。link填mailto:邮箱。' },
+    { name: '公众号-互联网暑期', q: '互联网 暑期实习 2026 字节 腾讯 阿里 美团 招聘', hint: '提取互联网大厂暑期实习岗位。如有网申链接或投递邮箱则提取。' },
     { name: '公众号-互联网战略', q: '互联网 战略分析 商业分析 实习 招聘 2026', hint: '如有投递链接或邮箱则提取。' },
     { name: '公众号-四大实习', q: 'Deloitte PwC EY KPMG 实习 招聘 2026', hint: '提取四大的实习岗位和投递方式。' },
-    { name: '公众号-魔都实习', q: '魔都实习 咨询 金融 战略 2026', hint: '提取实习信息和投递方式（邮箱或链接）。' },
+    { name: '公众号-魔都实习', q: '魔都实习 咨询 金融 战略 互联网 2026', hint: '提取实习信息和投递方式（邮箱或链接）。' },
+    { name: '公众号-暑期实习', q: '暑期实习 2026 春招 互联网 大厂 开放', hint: '提取暑期实习开放的岗位信息和投递方式。' },
+    { name: '公众号-新能源实习', q: '新能源 汽车 比亚迪 蔚来 实习 招聘 2026', hint: '提取新能源车企实习岗位。' },
   ];
 
   for (const wq of weixinQueries) {
