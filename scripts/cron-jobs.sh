@@ -304,3 +304,10 @@ async function upsertIntel(signals) {
 
 echo "[3/3] Done!"
 echo "===== Finished $(date) ====="
+
+# 3. Playwright scrape Chinese company sites (SPA)
+echo "[EXTRA] Scraping company career sites with Playwright..."
+source .env.local 2>/dev/null
+export ANTHROPIC_API_KEY DEEPSEEK_API_KEY NEXT_PUBLIC_SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY NODE_TLS_REJECT_UNAUTHORIZED=0
+node scripts/scrape-company-sites.js 2>&1
+echo "===== All done $(date) ====="
