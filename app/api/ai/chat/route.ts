@@ -59,46 +59,65 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-    if (!apiKey) {
+    // Use Claude API (better quality, no hallucination) with DeepSeek fallback
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    const deepseekKey = process.env.DEEPSEEK_API_KEY;
+    if (!anthropicKey && !deepseekKey) {
       return NextResponse.json({ response: "AI服务未配置，请联系管理员。" });
     }
 
     const systemPrompt = type === "mock" ? MOCK_SYSTEM : QA_SYSTEM;
 
-    const messages: { role: string; content: string }[] = [
-      { role: "system", content: systemPrompt },
-    ];
-
     const recentHistory = (history || []).slice(-6);
-    for (const h of recentHistory) {
-      messages.push({
-        role: h.role === "ai" ? "assistant" : "user",
-        content: h.text,
+    const chatMessages = recentHistory.map((h) => ({
+      role: h.role === "ai" ? "assistant" as const : "user" as const,
+      content: h.text,
+    }));
+    chatMessages.push({ role: "user" as const, content: message });
+
+    let response: Response;
+
+    if (anthropicKey) {
+      // Claude API
+      response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          system: systemPrompt,
+          messages: chatMessages,
+          max_tokens: 500,
+        }),
+      });
+    } else {
+      // DeepSeek fallback
+      response = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${deepseekKey}`,
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [{ role: "system", content: systemPrompt }, ...chatMessages],
+          max_tokens: 500,
+          temperature: 0.7,
+        }),
       });
     }
-    messages.push({ role: "user", content: message });
-
-    const response = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages,
-        max_tokens: 500,
-        temperature: 0.7,
-      }),
-    });
 
     if (!response.ok) {
-      throw new Error(`DeepSeek error: ${response.status}`);
+      throw new Error(`AI API error: ${response.status}`);
     }
 
     const data = await response.json();
+    // Claude: data.content[0].text, DeepSeek: data.choices[0].message.content
     const aiResponse =
+      data.content?.[0]?.text ||
       data.choices?.[0]?.message?.content ||
       "抱歉，请重新表述你的问题。";
 
