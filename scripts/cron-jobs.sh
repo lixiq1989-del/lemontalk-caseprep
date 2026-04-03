@@ -3,9 +3,11 @@
 # Runs daily on Mac, no timeout limits
 # Add to crontab: 0 10 * * * /Users/simon/case-partner/scripts/cron-jobs.sh >> /tmp/cron-jobs.log 2>&1
 
+export PATH="/opt/homebrew/bin:$PATH"
 cd /Users/simon/case-partner
 export NODE_TLS_REJECT_UNAUTHORIZED=0
 source .env.local 2>/dev/null
+export ANTHROPIC_API_KEY DEEPSEEK_API_KEY NEXT_PUBLIC_SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY
 
 echo "===== $(date) ====="
 
