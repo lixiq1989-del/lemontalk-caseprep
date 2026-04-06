@@ -109,6 +109,7 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
     }
   }, []);
 
+  // Streaming send: AI response streams in real-time, panel markers execute as they appear
   const sendMessage = async (text: string) => {
     if (!text.trim() || loading) return;
 
@@ -117,28 +118,92 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
     setInput("");
     setLoading(true);
 
-    try {
-      const panelContext = activePanel ? `用户当前在看: ${PANELS[activePanel]?.label || activePanel}` : "用户刚进入平台";
+    // Add a placeholder AI message that we'll stream into
+    const aiMsgIndex = messages.length + 1; // +1 for the user msg we just added
+    setMessages((prev) => [...prev, { role: "ai", text: "" }]);
 
-      const res = await fetch("/api/ai/chat", {
+    try {
+      const panelContext = activePanel ? PANELS[activePanel]?.label || activePanel : "";
+
+      const res = await fetch("/api/ai/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "qa",
-          message: `[${panelContext}]${user ? " [已登录]" : ""}\n\n${text.trim()}`,
+          message: text.trim(),
           history: messages.slice(-8),
+          panelContext,
         }),
       });
 
-      const data = await res.json();
-      const { cleanText, action } = parseResponse(data.response || "抱歉，请重试。", text.trim());
+      if (!res.ok || !res.body) throw new Error("Stream failed");
 
-      const aiMsg: Message = { role: "ai", text: cleanText, action };
-      setMessages((prev) => [...prev, aiMsg]);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+      let buffer = "";
 
-      if (action) setTimeout(() => executeAction(action), 300);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6);
+          if (data === "[DONE]") continue;
+
+          try {
+            const { text: chunk } = JSON.parse(data);
+            if (!chunk) continue;
+
+            fullText += chunk;
+
+            // Parse and execute panel markers as they appear
+            const markerRegex = /\[PANEL:([^\]]+)\]/g;
+            let match;
+            while ((match = markerRegex.exec(fullText)) !== null) {
+              const parts = match[1].split(":");
+              const panelKey = parts[0];
+              const action = parts[1] || "open";
+              const param = parts[2] || "";
+
+              if (action === "open" && PANELS[panelKey]) {
+                const props: Record<string, any> = {};
+                if (panelKey === "drill" && param) props.initialCategory = param;
+                if (panelKey === "jobs" && param) props.initialRegion = param;
+                setActivePanel(panelKey);
+                setPanelProps(props);
+              } else if (panelKey === "preference" && action === "set" && param) {
+                const [key, value] = param.split("=");
+                if (key && value) localStorage.setItem(`ai_pref_${key}`, value);
+              }
+            }
+
+            // Update the AI message with text (strip panel markers for display)
+            const displayText = fullText.replace(/\[PANEL:[^\]]+\]/g, "").trim();
+            setMessages((prev) => {
+              const updated = [...prev];
+              if (updated[aiMsgIndex]) {
+                updated[aiMsgIndex] = { ...updated[aiMsgIndex], text: displayText };
+              }
+              return updated;
+            });
+          } catch {
+            // Skip unparseable chunks
+          }
+        }
+      }
     } catch {
-      setMessages((prev) => [...prev, { role: "ai", text: "网络错误，请重试。" }]);
+      setMessages((prev) => {
+        const updated = [...prev];
+        if (updated[aiMsgIndex]) {
+          updated[aiMsgIndex] = { ...updated[aiMsgIndex], text: "网络错误，请重试。" };
+        }
+        return updated;
+      });
     } finally {
       setLoading(false);
     }
