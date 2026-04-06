@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
-import AIAssistant from "@/components/AIAssistant";
+import CoworkLayout from "@/components/CoworkLayout";
 import { AuthProvider } from "@/lib/auth-context";
 
 const geistSans = Geist({
@@ -39,8 +39,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <Nav />
-          <main className="max-w-6xl mx-auto px-4 py-6 pb-24 md:pb-6">{children}</main>
-          <AIAssistant />
+          <CoworkLayout>{children}</CoworkLayout>
         </AuthProvider>
       </body>
     </html>
