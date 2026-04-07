@@ -76,6 +76,17 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
         }
       }
     } catch {}
+
+    // Listen for panel switch events from PlanPanelWrapper
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.panel && PANELS[detail.panel]) {
+        setActivePanel(detail.panel);
+        setPanelProps(detail.props || {});
+      }
+    };
+    window.addEventListener("switch-panel", handler);
+    return () => window.removeEventListener("switch-panel", handler);
   }, []);
 
   useEffect(() => {

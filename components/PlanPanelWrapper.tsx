@@ -42,6 +42,10 @@ export default function PlanPanelWrapper() {
     );
   }
 
-  // onSwitchPanel not needed here since tabs handle switching
-  return <PlanPanel plan={plan} onSwitchPanel={() => {}} />;
+  // Dispatch panel switch event for CoworkLayout to handle
+  const handleSwitch = (panel: string, props?: Record<string, any>) => {
+    window.dispatchEvent(new CustomEvent("switch-panel", { detail: { panel, props } }));
+  };
+
+  return <PlanPanel plan={plan} onSwitchPanel={handleSwitch} />;
 }
