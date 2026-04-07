@@ -63,6 +63,20 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Restore saved plan on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("caseprep_plan");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.title && parsed?.sections) {
+          setPlanSpec(parsed);
+          setActivePanel("_plan");
+        }
+      }
+    } catch {}
+  }, []);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
