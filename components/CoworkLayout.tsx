@@ -238,9 +238,12 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
                 }
                 setActivePanel(panelKey);
                 setPanelProps(props);
-                // Also emit to panelBus so already-mounted components react
-                if (panelKey === "drill" && param) panelBus.emit("drill", "start", { category: param });
-                if (panelKey === "jobs" && param) panelBus.emit("jobs", "filter", { region: param });
+                // Emit to panelBus after component mounts (delay for React render cycle)
+                setTimeout(() => {
+                  if (panelKey === "drill" && param) panelBus.emit("drill", "start", { category: param });
+                  if (panelKey === "jobs" && param) panelBus.emit("jobs", "filter", { region: param });
+                  if (panelKey === "partner" && param) panelBus.emit("partner", "filter", { caseType: param });
+                }, 500);
               } else if (action === "filter") {
                 // Direct filter command: [PANEL:partner:filter:Profitability,beginner]
                 const filterParts = param.split(",");
