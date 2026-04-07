@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { panelBus } from "@/lib/panel-bus";
 
 interface Job {
   id: number;
@@ -74,6 +75,17 @@ export default function JobsModule({ initialFilter, initialRegion }: JobsModuleP
       setCompanies(companyData.companies || []);
       setLoading(false);
     }).catch(() => setLoading(false));
+  }, []);
+
+  // Listen for AI commands
+  useEffect(() => {
+    return panelBus.on("jobs", (cmd) => {
+      if (cmd.action === "filter") {
+        if (cmd.params.region) setRegionFilter(cmd.params.region);
+        if (cmd.params.type) setTypeFilter(cmd.params.type);
+        if (cmd.params.tab) setTab(cmd.params.tab);
+      }
+    });
   }, []);
 
   const visible = jobs.filter((j) => {

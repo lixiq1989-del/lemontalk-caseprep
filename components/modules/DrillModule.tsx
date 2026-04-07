@@ -7,6 +7,7 @@ import { SIZING_CASES } from "@/lib/sizing";
 import { useAuth } from "@/lib/auth-context";
 import { useSearchParams } from "next/navigation";
 import ChartDisplay from "@/components/ChartDisplay";
+import { panelBus } from "@/lib/panel-bus";
 
 type Mode = "home" | "drill" | "result";
 
@@ -111,6 +112,18 @@ export default function DrillModule({ initialCategory, onClose: _onClose }: Dril
     if (cat) startDrill(cat);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlCategory, initialCategory]);
+
+  // Listen for AI commands
+  useEffect(() => {
+    return panelBus.on("drill", (cmd) => {
+      if (cmd.action === "start" && cmd.params.category) {
+        startDrill(cmd.params.category);
+      } else if (cmd.action === "next") {
+        // Next question (if in drill mode)
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDrill]);
 
   const recordAnswer = useCallback(
     (isCorrect: boolean) => {

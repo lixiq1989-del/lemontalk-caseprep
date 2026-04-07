@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, Suspense, lazy } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { panelBus } from "@/lib/panel-bus";
 
 // Dynamically importable panel modules
 const PANELS: Record<string, { label: string; icon: string; component: React.LazyExoticComponent<any> }> = {
@@ -141,6 +142,7 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
       const decoder = new TextDecoder();
       let fullText = "";
       let buffer = "";
+      let executedMarkers = new Set<string>();
 
       while (true) {
         const { done, value } = await reader.read();
@@ -161,10 +163,13 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
 
             fullText += chunk;
 
-            // Parse and execute panel markers as they appear
+            // Parse and execute panel markers as they appear (skip already-executed ones)
             const markerRegex = /\[PANEL:([^\]]+)\]/g;
             let match;
             while ((match = markerRegex.exec(fullText)) !== null) {
+              const markerKey = match[0] + "_" + match.index;
+              if (executedMarkers.has(markerKey)) continue;
+              executedMarkers.add(markerKey);
               const parts = match[1].split(":");
               const panelKey = parts[0];
               const action = parts[1] || "open";
@@ -174,8 +179,31 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
                 const props: Record<string, any> = {};
                 if (panelKey === "drill" && param) props.initialCategory = param;
                 if (panelKey === "jobs" && param) props.initialRegion = param;
+                if (panelKey === "partner") {
+                  if (param) props.initialCaseType = param;
+                }
                 setActivePanel(panelKey);
                 setPanelProps(props);
+                // Also emit to panelBus so already-mounted components react
+                if (panelKey === "drill" && param) panelBus.emit("drill", "start", { category: param });
+                if (panelKey === "jobs" && param) panelBus.emit("jobs", "filter", { region: param });
+              } else if (action === "filter") {
+                // Direct filter command: [PANEL:partner:filter:Profitability,beginner]
+                const filterParts = param.split(",");
+                if (panelKey === "partner") {
+                  panelBus.emit("partner", "filter", {
+                    caseType: filterParts[0] || "",
+                    level: filterParts[1] || "",
+                    firm: filterParts[2] || "",
+                  });
+                } else if (panelKey === "jobs") {
+                  panelBus.emit("jobs", "filter", {
+                    region: filterParts[0] || "",
+                    type: filterParts[1] || "",
+                  });
+                } else if (panelKey === "drill") {
+                  panelBus.emit("drill", "start", { category: filterParts[0] || "" });
+                }
               } else if (panelKey === "preference" && action === "set" && param) {
                 const [key, value] = param.split("=");
                 if (key && value) localStorage.setItem(`ai_pref_${key}`, value);

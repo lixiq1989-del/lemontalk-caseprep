@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { panelBus } from "@/lib/panel-bus";
 
 interface Student {
   id: number;
@@ -157,6 +158,17 @@ export default function PartnerModule({ initialLevel, initialFirm, initialCaseTy
   const [myLevel, setMyLevel] = useState("");
   const [myCaseTypes, setMyCaseTypes] = useState<string[]>([]);
   const [smartSort, setSmartSort] = useState(false);
+
+  // Listen for AI commands
+  useEffect(() => {
+    return panelBus.on("partner", (cmd) => {
+      if (cmd.action === "filter") {
+        if (cmd.params.caseType) setFilterCaseType(cmd.params.caseType);
+        if (cmd.params.level) setFilterLevel(cmd.params.level);
+        if (cmd.params.firm) setFilterFirm(cmd.params.firm);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams();
