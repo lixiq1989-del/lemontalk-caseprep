@@ -63,6 +63,7 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const hadPanelAction = useRef(false);
 
   // Restore saved plan on mount
   useEffect(() => {
@@ -176,6 +177,7 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
     // Add a placeholder AI message that we'll stream into
     const aiMsgIndex = messages.length + 1; // +1 for the user msg we just added
     setMessages((prev) => [...prev, { role: "ai", text: "" }]);
+    hadPanelAction.current = false;
 
     try {
       const panelContext = activePanel ? PANELS[activePanel]?.label || activePanel : "";
@@ -224,6 +226,7 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
               const markerKey = match[0] + "_" + match.index;
               if (executedMarkers.has(markerKey)) continue;
               executedMarkers.add(markerKey);
+              hadPanelAction.current = true;
               const parts = match[1].split(":");
               const panelKey = parts[0];
               const action = parts[1] || "open";
@@ -352,7 +355,7 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
         return updated;
       });
       // Fallback: if AI didn't emit any panel marker, auto-detect from user input
-      if (executedMarkers.size === 0) {
+      if (!hadPanelAction.current) {
         const input = text.trim().toLowerCase();
         let fallbackPanel = "";
         let fallbackProps: Record<string, any> = {};
