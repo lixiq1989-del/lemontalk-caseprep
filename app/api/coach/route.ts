@@ -85,25 +85,31 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const res = await fetch("https://api.deepseek.com/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "deepseek-chat",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT + statsContext },
-        ...messages,
-      ],
-      temperature: 0.7,
-      max_tokens: 400,
-    }),
-  });
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const deepseekKey = process.env.DEEPSEEK_API_KEY;
+
+  let res: Response;
+  if (anthropicKey) {
+    res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": anthropicKey, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        system: SYSTEM_PROMPT + statsContext,
+        messages,
+        max_tokens: 400,
+      }),
+    });
+  } else {
+    res = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
+      body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "system", content: SYSTEM_PROMPT + statsContext }, ...messages], temperature: 0.7, max_tokens: 400 }),
+    });
+  }
 
   const data = await res.json();
-  const content: string = data.choices?.[0]?.message?.content || "我这边出了点问题，稍后再试试吧。";
+  const content: string = data.content?.[0]?.text || data.choices?.[0]?.message?.content || "我这边出了点问题，稍后再试试吧。";
 
   type ParsedAction = { type: string; params: Record<string, string> };
 

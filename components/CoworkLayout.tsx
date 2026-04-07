@@ -366,7 +366,7 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
   const ActivePanelComponent = activePanel && PANELS[activePanel] ? PANELS[activePanel].component : null;
 
   return (
-    <div className="flex h-[calc(100vh-56px)] overflow-hidden">
+    <div className="flex h-screen overflow-hidden">
       {/* ===== LEFT: AI Chat ===== */}
       <div className={`${showChat ? "w-[380px]" : "w-0"} flex-shrink-0 border-r border-border bg-white flex flex-col transition-all duration-200 overflow-hidden`}>
         {/* Chat header */}

@@ -85,8 +85,9 @@ export async function POST(req: NextRequest) {
   try {
     const { company, role, jd, resumeText } = await req.json();
 
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-    if (!apiKey) {
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    const deepseekKey = process.env.DEEPSEEK_API_KEY;
+    if (!anthropicKey && !deepseekKey) {
       return NextResponse.json({ error: "服务端未配置 API Key" }, { status: 500 });
     }
 
@@ -100,32 +101,41 @@ export async function POST(req: NextRequest) {
       .replace("{jd}", jd?.trim() || "（未提供详细JD）")
       .replace("{resume_section}", resumeSection);
 
-    // Call DeepSeek API (OpenAI-compatible)
-    const response = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: prompt },
-        ],
-        max_tokens: 5000,
-        temperature: 0.7,
-        response_format: { type: "json_object" },
-      }),
-    });
+    let response: Response;
+    if (anthropicKey) {
+      response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          system: SYSTEM_PROMPT,
+          messages: [{ role: "user", content: prompt + "\n\n只返回JSON，不要markdown代码块。" }],
+          max_tokens: 5000,
+        }),
+      });
+    } else {
+      response = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${deepseekKey}` },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: prompt }],
+          max_tokens: 5000, temperature: 0.7, response_format: { type: "json_object" },
+        }),
+      });
+    }
 
     if (!response.ok) {
       const err = await response.text();
-      throw new Error(`DeepSeek API error: ${response.status} ${err}`);
+      throw new Error(`AI API error: ${response.status} ${err}`);
     }
 
     const result = await response.json();
-    let raw = result.choices?.[0]?.message?.content?.trim() || "";
+    let raw = (result.content?.[0]?.text || result.choices?.[0]?.message?.content || "").trim();
 
     // Strip markdown code block if present
     if (raw.startsWith("```")) {
