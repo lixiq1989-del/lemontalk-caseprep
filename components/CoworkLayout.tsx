@@ -554,7 +554,7 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
         )}
 
         {/* Panel content — leaves room for mobile bottom bar */}
-        <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-20 md:pb-6">
+        <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-32 md:pb-6">
           <div className="max-w-4xl mx-auto">
             {activePanel === "_doc" ? (
               <AIDocPanel content={docContent} title={docTitle} />
@@ -569,17 +569,25 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
         </div>
       </div>
 
-      {/* ===== MOBILE: Bottom AI bar ===== */}
+      {/* ===== MOBILE: Bottom AI bar with last message ===== */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-border safe-bottom">
+        {/* Last AI message preview */}
+        {messages.length > 0 && (
+          <button onClick={() => setMobileChat(true)} className="w-full px-3 pt-2 pb-1 text-left">
+            <div className="bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-600 line-clamp-2">
+              <span className="text-[10px] font-semibold text-[#051C2C] mr-1">AI:</span>
+              {messages.filter(m => m.role === "ai").slice(-1)[0]?.text || "..."}
+            </div>
+          </button>
+        )}
+        {/* Input row */}
         <div className="flex items-center gap-2 px-3 py-2">
-          {/* Chat history toggle */}
           <button
             onClick={() => setMobileChat(!mobileChat)}
             className="shrink-0 w-9 h-9 rounded-full bg-[#051C2C] text-white flex items-center justify-center"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
           </button>
-          {/* Input */}
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
