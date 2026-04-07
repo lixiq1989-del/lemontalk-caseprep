@@ -351,6 +351,53 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
         }
         return updated;
       });
+      // Fallback: if AI didn't emit any panel marker, auto-detect from user input
+      if (executedMarkers.size === 0) {
+        const input = text.trim().toLowerCase();
+        let fallbackPanel = "";
+        let fallbackProps: Record<string, any> = {};
+
+        if (input.includes("岗位") || input.includes("招聘") || input.includes("job") || input.includes("实习")) {
+          fallbackPanel = "jobs";
+          if (input.includes("国内") || input.includes("中国") || input.includes("互联网")) fallbackProps = { initialRegion: "CN" };
+          else if (input.includes("英国") || input.includes("uk")) fallbackProps = { initialRegion: "UK" };
+          else if (input.includes("美国") || input.includes("us")) fallbackProps = { initialRegion: "US" };
+          else if (input.includes("香港") || input.includes("hk")) fallbackProps = { initialRegion: "HK" };
+        } else if (input.includes("练") || input.includes("刷题") || input.includes("drill")) {
+          fallbackPanel = "drill";
+          if (input.includes("框架") || input.includes("structur")) fallbackProps = { initialCategory: "structuring" };
+          else if (input.includes("计算") || input.includes("math")) fallbackProps = { initialCategory: "case_math" };
+          else if (input.includes("图表") || input.includes("chart")) fallbackProps = { initialCategory: "chart" };
+        } else if (input.includes("case") || input.includes("题库")) {
+          fallbackPanel = "casebook";
+        } else if (input.includes("partner") || input.includes("伙伴") || input.includes("配对")) {
+          fallbackPanel = "partner";
+        } else if (input.includes("模拟") || input.includes("mock")) {
+          fallbackPanel = "mock";
+        } else if (input.includes("pei") || input.includes("行为面试")) {
+          fallbackPanel = "pei";
+        } else if (input.includes("简历") || input.includes("resume")) {
+          fallbackPanel = "resume";
+        } else if (input.includes("计划") || input.includes("准备面试") || input.includes("冲刺")) {
+          fallbackPanel = "myplan";
+        }
+
+        if (fallbackPanel && PANELS[fallbackPanel]) {
+          setActivePanel(fallbackPanel);
+          setPanelProps(fallbackProps);
+          setTimeout(() => {
+            if (fallbackPanel === "jobs" && fallbackProps.initialRegion) {
+              panelBus.emit("jobs", "filter", { region: fallbackProps.initialRegion });
+            }
+            if (fallbackPanel === "drill" && fallbackProps.initialCategory) {
+              panelBus.emit("drill", "start", { category: fallbackProps.initialCategory });
+            }
+            if (fallbackPanel === "partner" && fallbackProps.initialCaseType) {
+              panelBus.emit("partner", "filter", { caseType: fallbackProps.initialCaseType });
+            }
+          }, 500);
+        }
+      }
     } finally {
       setLoading(false);
     }
