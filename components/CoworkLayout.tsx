@@ -453,6 +453,15 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
         {/* Panel tabs (when a panel is active) */}
         {activePanel && (
           <div className="sticky top-0 z-10 bg-white border-b border-border px-4 py-2 flex items-center gap-2 overflow-x-auto">
+            {/* Back to plan button */}
+            {planSpec && activePanel !== "_plan" && (
+              <button
+                onClick={() => setActivePanel("_plan")}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap bg-[#051C2C] text-white mr-1"
+              >
+                ← 返回方案
+              </button>
+            )}
             {Object.entries(PANELS).map(([key, panel]) => (
               <button
                 key={key}
