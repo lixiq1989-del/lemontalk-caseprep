@@ -18,6 +18,30 @@ const PANELS: Record<string, { label: string; icon: string; component: React.Laz
   industry: { label: "行业速查", icon: "🏭", component: lazy(() => import("@/components/modules/IndustryModule")) },
 };
 
+// AI-generated document panel (like Claude artifacts)
+function AIDocPanel({ content, title }: { content: string; title: string }) {
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-lg">📝</span>
+        <h1 className="text-xl font-bold text-[#051C2C]">{title}</h1>
+        <span className="text-xs bg-[#051C2C]/10 text-[#051C2C] px-2 py-0.5 rounded-full">AI 生成</span>
+      </div>
+      <div className="bg-white border border-border rounded-xl p-6 prose prose-sm max-w-none">
+        {content.split("\n").map((line, i) => {
+          if (line.startsWith("# ")) return <h1 key={i} className="text-xl font-bold mt-4 mb-2">{line.slice(2)}</h1>;
+          if (line.startsWith("## ")) return <h2 key={i} className="text-lg font-bold mt-4 mb-2">{line.slice(3)}</h2>;
+          if (line.startsWith("### ")) return <h3 key={i} className="text-base font-bold mt-3 mb-1">{line.slice(4)}</h3>;
+          if (line.startsWith("- ")) return <li key={i} className="ml-4 text-sm text-gray-700 mb-1">{line.slice(2)}</li>;
+          if (line.startsWith("**") && line.endsWith("**")) return <p key={i} className="font-bold text-sm mt-2">{line.slice(2, -2)}</p>;
+          if (line.trim() === "") return <div key={i} className="h-2" />;
+          return <p key={i} className="text-sm text-gray-700 leading-relaxed mb-1">{line}</p>;
+        })}
+      </div>
+    </div>
+  );
+}
+
 interface Message {
   role: "user" | "ai";
   text: string;
@@ -30,6 +54,8 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState(false);
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const [panelProps, setPanelProps] = useState<Record<string, any>>({});
+  const [docContent, setDocContent] = useState("");
+  const [docTitle, setDocTitle] = useState("");
   const [showChat, setShowChat] = useState(true);
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -207,11 +233,24 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
               } else if (panelKey === "preference" && action === "set" && param) {
                 const [key, value] = param.split("=");
                 if (key && value) localStorage.setItem(`ai_pref_${key}`, value);
+              } else if (panelKey === "doc") {
+                // [PANEL:doc:write:标题] — switch to AI document mode
+                setActivePanel("_doc");
+                setDocTitle(param || "AI 文档");
               }
             }
 
-            // Update the AI message with text (strip panel markers for display)
-            const displayText = fullText.replace(/\[PANEL:[^\]]+\]/g, "").trim();
+            // Extract DOC content blocks: everything between [DOC_START] and [DOC_END]
+            const docMatch = fullText.match(/\[DOC_START\]([\s\S]*?)(\[DOC_END\]|$)/);
+            if (docMatch) {
+              setDocContent(docMatch[1].trim());
+            }
+
+            // Update the AI message with text (strip markers for display)
+            const displayText = fullText
+              .replace(/\[PANEL:[^\]]+\]/g, "")
+              .replace(/\[DOC_START\][\s\S]*?(\[DOC_END\]|$)/g, "")
+              .trim();
             setMessages((prev) => {
               const updated = [...prev];
               if (updated[aiMsgIndex]) {
@@ -384,12 +423,13 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
 
         {/* Panel content */}
         <div className="p-4 md:p-6 max-w-4xl mx-auto">
-          {ActivePanelComponent ? (
+          {activePanel === "_doc" ? (
+            <AIDocPanel content={docContent} title={docTitle} />
+          ) : ActivePanelComponent ? (
             <Suspense fallback={<div className="text-center py-20 text-muted">加载中...</div>}>
               <ActivePanelComponent {...panelProps} />
             </Suspense>
           ) : !activePanel ? (
-            // Welcome / default view (show children = current page route)
             <>{children}</>
           ) : null}
         </div>
