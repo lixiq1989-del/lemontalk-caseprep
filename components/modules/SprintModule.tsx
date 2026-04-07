@@ -3,6 +3,24 @@
 import { useState } from "react";
 
 interface CheatsheetData {
+  industry_brief?: {
+    what?: string;
+    market_size?: string;
+    key_players?: string;
+    trends?: string;
+    why_matters?: string;
+  };
+  company_analysis?: {
+    positioning?: string;
+    business_model?: string;
+    revenue_structure?: string;
+    moat?: string;
+    core_businesses?: { name: string; role: string; brief: string }[];
+    current_strategy?: string;
+    culture_keywords?: string[];
+    interview_style?: string;
+  };
+  // Legacy fallback
   company_intel?: {
     culture_keywords?: string[];
     interview_style?: string;
@@ -11,7 +29,7 @@ interface CheatsheetData {
   opening_pitch?: string;
   job_core_requirements?: { req: string; detail: string; weight: string }[];
   match_points?: { your_bg: string; connects_to: string; gap?: string }[];
-  key_questions?: { q: string; type: string; angle: string; answer_frame: string }[];
+  key_questions?: { q: string; type: string; angle: string; answer_frame?: string; good_answer?: string; scoring_tips?: string }[];
   star_stories?: { title: string; s: string; t: string; a: string; r: string; use_for: string[] }[];
   questions_to_ask?: { q: string; why: string; timing?: string }[];
   danger_zones?: { zone: string; how_to_handle: string }[];
@@ -21,6 +39,7 @@ interface CheatsheetData {
 const TYPE_COLORS: Record<string, string> = {
   Behavioral: "bg-blue-100 text-blue-700",
   Case: "bg-purple-100 text-purple-700",
+  Business: "bg-orange-100 text-orange-700",
   Technical: "bg-green-100 text-green-700",
   Motivational: "bg-amber-100 text-amber-700",
 };
@@ -45,7 +64,8 @@ function toPlainText(data: CheatsheetData, company: string, role: string) {
   lines.push(`\n【高频预测题】`);
   data.key_questions?.forEach((q, i) => {
     lines.push(`  Q${i + 1}. ${q.q} [${q.type}]`);
-    lines.push(`      答法：${q.answer_frame}\n`);
+    lines.push(`      出彩回答：${q.good_answer || q.answer_frame || ""}\n`);
+    if (q.scoring_tips) lines.push(`      高分关键：${q.scoring_tips}\n`);
   });
 
   lines.push(`\n【STAR 故事库】`);
@@ -121,9 +141,64 @@ export default function SprintModule(props: SprintModuleProps) {
           </div>
         </div>
 
-        {/* Company Intel */}
-        {data.company_intel && (
-          <div className="border border-border rounded-xl p-6 bg-white mb-4">
+        {/* Industry Brief */}
+        {data.industry_brief && (
+          <div className="border border-border rounded-xl p-5 bg-white mb-4">
+            <h3 className="text-sm font-bold mb-3">🏭 行业速览</h3>
+            <div className="space-y-2 text-sm">
+              {data.industry_brief.what && <p><b>定义：</b>{data.industry_brief.what}</p>}
+              {data.industry_brief.market_size && <p><b>规模：</b>{data.industry_brief.market_size}</p>}
+              {data.industry_brief.key_players && <p><b>头部玩家：</b>{data.industry_brief.key_players}</p>}
+              {data.industry_brief.trends && <p><b>趋势：</b>{data.industry_brief.trends}</p>}
+              {data.industry_brief.why_matters && <p className="text-xs text-muted mt-2 bg-gray-50 rounded-lg p-2">💡 {data.industry_brief.why_matters}</p>}
+            </div>
+          </div>
+        )}
+
+        {/* Company Analysis */}
+        {data.company_analysis && (
+          <div className="border border-border rounded-xl p-5 bg-white mb-4">
+            <h3 className="text-sm font-bold mb-3">🏢 公司深度</h3>
+            <div className="space-y-2 text-sm">
+              {data.company_analysis.positioning && <p className="font-semibold text-[#051C2C]">{data.company_analysis.positioning}</p>}
+              {data.company_analysis.business_model && <p><b>商业模式：</b>{data.company_analysis.business_model}</p>}
+              {data.company_analysis.revenue_structure && <p><b>收入结构：</b>{data.company_analysis.revenue_structure}</p>}
+              {data.company_analysis.moat && <p><b>护城河：</b>{data.company_analysis.moat}</p>}
+              {data.company_analysis.current_strategy && <p><b>当前战略：</b>{data.company_analysis.current_strategy}</p>}
+              {data.company_analysis.core_businesses && data.company_analysis.core_businesses.length > 0 && (
+                <div className="mt-2">
+                  <p className="font-semibold text-xs text-muted mb-1.5">核心业务线</p>
+                  <div className="space-y-1.5">
+                    {data.company_analysis.core_businesses.map((biz, i) => (
+                      <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-lg p-2">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${
+                          biz.role.includes("现金") ? "bg-green-100 text-green-700" :
+                          biz.role.includes("增长") ? "bg-blue-100 text-blue-700" :
+                          biz.role.includes("战略") ? "bg-purple-100 text-purple-700" :
+                          "bg-gray-100 text-gray-600"
+                        }`}>{biz.role}</span>
+                        <div>
+                          <span className="font-semibold text-xs">{biz.name}</span>
+                          <span className="text-xs text-muted ml-1">{biz.brief}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {data.company_analysis.culture_keywords?.map((k, i) => (
+                  <span key={i} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-medium">{k}</span>
+                ))}
+              </div>
+              {data.company_analysis.interview_style && <p className="text-xs text-muted">面试风格：{data.company_analysis.interview_style}</p>}
+            </div>
+          </div>
+        )}
+
+        {/* Legacy company_intel fallback */}
+        {!data.company_analysis && data.company_intel && (
+          <div className="border border-border rounded-xl p-5 bg-white mb-4">
             <h3 className="text-sm font-bold mb-3">🏢 公司情报</h3>
             <div className="flex flex-wrap gap-2 mb-2">
               {data.company_intel.culture_keywords?.map((k, i) => (
@@ -188,7 +263,18 @@ export default function SprintModule(props: SprintModuleProps) {
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${TYPE_COLORS[q.type] || "bg-gray-100 text-gray-600"}`}>{q.type}</span>
                     <span className="text-xs text-muted">考察：{q.angle}</span>
                   </div>
-                  <div className="mt-2 bg-purple-50 rounded px-3 py-2 text-xs">{q.answer_frame}</div>
+                  {q.good_answer && (
+                    <div className="mt-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-900 leading-relaxed">
+                      <p className="font-semibold text-[10px] text-green-700 mb-1">出彩回答示例：</p>
+                      {q.good_answer}
+                    </div>
+                  )}
+                  {q.scoring_tips && (
+                    <p className="mt-1.5 text-[10px] text-amber-700 bg-amber-50 rounded px-2 py-1">💡 高分关键：{q.scoring_tips}</p>
+                  )}
+                  {!q.good_answer && q.answer_frame && (
+                    <div className="mt-2 bg-purple-50 rounded px-3 py-2 text-xs">{q.answer_frame}</div>
+                  )}
                 </div>
               ))}
             </div>
