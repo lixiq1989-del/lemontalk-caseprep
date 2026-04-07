@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
         model: "claude-sonnet-4-20250514",
         system: SYSTEM_PROMPT,
         messages: chatMessages,
-        max_tokens: 500,
+        max_tokens: 2000,
         stream: true,
       }),
     });
@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
     body: JSON.stringify({
       model: "deepseek-chat",
       messages: [{ role: "system", content: SYSTEM_PROMPT }, ...chatMessages],
-      max_tokens: 500,
+      max_tokens: 2000,
       temperature: 0.7,
     }),
   });
