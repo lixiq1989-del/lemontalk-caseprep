@@ -418,10 +418,12 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
 
   const ActivePanelComponent = activePanel && PANELS[activePanel] ? PANELS[activePanel].component : null;
 
+  const [mobileChat, setMobileChat] = useState(false);
+
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* ===== LEFT: AI Chat ===== */}
-      <div className={`${showChat ? "w-[380px]" : "w-0"} flex-shrink-0 border-r border-border bg-white flex flex-col transition-all duration-200 overflow-hidden`}>
+      {/* ===== LEFT: AI Chat (desktop only) ===== */}
+      <div className={`hidden md:flex ${showChat ? "w-[380px]" : "w-0"} flex-shrink-0 border-r border-border bg-white flex-col transition-all duration-200 overflow-hidden`}>
         {/* Chat header */}
         <div className="bg-[#051C2C] text-white px-4 py-3 flex items-center gap-2 shrink-0">
           <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold">AI</div>
@@ -521,49 +523,128 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
         </div>
       </div>
 
-      {/* Chat toggle (when collapsed) */}
+      {/* Chat toggle (desktop, when collapsed) */}
       {!showChat && (
         <button
           onClick={() => setShowChat(true)}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-40 bg-[#051C2C] text-white w-8 h-16 rounded-r-lg flex items-center justify-center hover:w-10 transition-all"
+          className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-40 bg-[#051C2C] text-white w-8 h-16 rounded-r-lg items-center justify-center hover:w-10 transition-all"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       )}
 
       {/* ===== RIGHT: Dynamic Panel ===== */}
-      <div className="flex-1 overflow-y-auto bg-gray-50/50">
-        {/* Panel tabs (when a panel is active) */}
+      <div className="flex-1 flex flex-col overflow-hidden bg-gray-50/50">
+        {/* Panel tabs */}
         {activePanel && (
-          <div className="sticky top-0 z-10 bg-white border-b border-border px-4 py-2 flex items-center gap-2 overflow-x-auto">
+          <div className="sticky top-0 z-10 bg-white border-b border-border px-3 md:px-4 py-2 flex items-center gap-1.5 md:gap-2 overflow-x-auto shrink-0">
             {Object.entries(PANELS).map(([key, panel]) => (
               <button
                 key={key}
                 onClick={() => { setActivePanel(key); setPanelProps({}); }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-lg text-[11px] md:text-xs font-medium whitespace-nowrap transition-colors ${
                   activePanel === key ? "bg-[#051C2C] text-white" : "text-muted hover:bg-gray-100"
                 }`}
               >
-                <span>{panel.icon}</span>
+                <span className="hidden md:inline">{panel.icon}</span>
                 <span>{panel.label}</span>
               </button>
             ))}
           </div>
         )}
 
-        {/* Panel content */}
-        <div className="p-4 md:p-6 max-w-4xl mx-auto">
-          {activePanel === "_doc" ? (
-            <AIDocPanel content={docContent} title={docTitle} />
-          ) : ActivePanelComponent ? (
-            <Suspense fallback={<div className="text-center py-20 text-muted">加载中...</div>}>
-              <ActivePanelComponent {...panelProps} />
-            </Suspense>
-          ) : !activePanel ? (
-            <>{children}</>
-          ) : null}
+        {/* Panel content — leaves room for mobile bottom bar */}
+        <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-20 md:pb-6">
+          <div className="max-w-4xl mx-auto">
+            {activePanel === "_doc" ? (
+              <AIDocPanel content={docContent} title={docTitle} />
+            ) : ActivePanelComponent ? (
+              <Suspense fallback={<div className="text-center py-20 text-muted">加载中...</div>}>
+                <ActivePanelComponent {...panelProps} />
+              </Suspense>
+            ) : !activePanel ? (
+              <>{children}</>
+            ) : null}
+          </div>
         </div>
       </div>
+
+      {/* ===== MOBILE: Bottom AI bar ===== */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-border safe-bottom">
+        <div className="flex items-center gap-2 px-3 py-2">
+          {/* Chat history toggle */}
+          <button
+            onClick={() => setMobileChat(!mobileChat)}
+            className="shrink-0 w-9 h-9 rounded-full bg-[#051C2C] text-white flex items-center justify-center"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          </button>
+          {/* Input */}
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); setMobileChat(false); } }}
+            placeholder="告诉AI你想做什么..."
+            rows={1}
+            className="flex-1 resize-none bg-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#051C2C]/20 max-h-10"
+          />
+          <button
+            onClick={() => { sendMessage(input); setMobileChat(false); }}
+            disabled={!input.trim() || loading}
+            className="shrink-0 w-9 h-9 rounded-full bg-[#051C2C] text-white flex items-center justify-center disabled:opacity-30"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      {/* ===== MOBILE: Chat history overlay ===== */}
+      {mobileChat && (
+        <div className="md:hidden fixed inset-0 z-50 bg-white flex flex-col">
+          <div className="bg-[#051C2C] text-white px-4 py-3 flex items-center justify-between shrink-0">
+            <div className="text-sm font-semibold">AI 对话</div>
+            <button onClick={() => setMobileChat(false)} className="text-white/60">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+            {messages.length === 0 && (
+              <div className="text-center py-10">
+                <p className="text-sm text-muted">还没有对话</p>
+                <p className="text-xs text-muted mt-1">在底部输入框输入即可</p>
+              </div>
+            )}
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
+                  msg.role === "user" ? "bg-[#051C2C] text-white rounded-br-md" : "bg-gray-100 text-gray-800 rounded-bl-md"
+                }`}>
+                  <pre className="whitespace-pre-wrap font-sans">{msg.text}</pre>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-border px-3 py-2 safe-bottom">
+            <div className="flex items-center gap-2">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); setMobileChat(false); } }}
+                placeholder="告诉我你想做什么..."
+                rows={1}
+                className="flex-1 resize-none bg-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none max-h-20"
+              />
+              <button
+                onClick={() => { sendMessage(input); setMobileChat(false); }}
+                disabled={!input.trim() || loading}
+                className="shrink-0 w-9 h-9 rounded-xl bg-[#051C2C] text-white flex items-center justify-center disabled:opacity-30"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
