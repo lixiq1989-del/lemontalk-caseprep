@@ -133,41 +133,110 @@ export default function PlanPanel({ plan, onSwitchPanel }: { plan: PlanSpec; onS
         </div>
       )}
 
-      {/* ===== Section 3: 更多资源 ===== */}
-      {others.length > 0 && (
+      {/* ===== Section 3: Case 练习 ===== */}
+      {others.some((s) => s.type === "casebook") && (
         <div>
           <h2 className="text-sm font-bold text-[#051C2C] mb-3 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E87722]" /> 更多资源
+            <span className="w-1.5 h-1.5 rounded-full bg-[#E87722]" /> Case 练习
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-            {others.map((s, i) => {
-              const colors: Record<string, string> = {
-                casebook: "hover:border-[#E87722]/40", partner: "hover:border-[#007680]/40",
-                jobs: "hover:border-[#00836E]/40", mock: "hover:border-[#C4071B]/40",
-              };
-              const handleClick = () => {
-                if (s.type === "casebook") onSwitchPanel("casebook");
-                else if (s.type === "partner") onSwitchPanel("partner", { initialCaseType: s.partnerCaseType });
-                else if (s.type === "jobs") onSwitchPanel("jobs", { initialRegion: s.jobsRegion });
-                else if (s.type === "mock") onSwitchPanel("mock");
-              };
-              return (
-                <button
-                  key={i}
-                  onClick={handleClick}
-                  className={`bg-white border border-border rounded-xl p-4 text-left ${colors[s.type] || ""} hover:shadow-sm transition-all`}
-                >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {others.filter((s) => s.type === "casebook").map((s, i) => (
+              <button key={i} onClick={() => onSwitchPanel("casebook")}
+                className="bg-white border border-border rounded-xl p-4 text-left hover:border-[#E87722]/40 hover:shadow-sm transition-all group">
+                <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg">{s.icon}</span>
-                  <h4 className="text-sm font-semibold text-[#051C2C] mt-2">{s.title}</h4>
-                  <p className="text-[11px] text-muted mt-1">
-                    {s.type === "casebook" && (s.caseType || "浏览全部Case")}
-                    {s.type === "partner" && `找 ${s.partnerCaseType || "Case"} 伙伴`}
-                    {s.type === "jobs" && `${s.jobsRegion === "CN" ? "国内" : s.jobsRegion || "全球"}岗位`}
-                    {s.type === "mock" && "AI模拟面试"}
-                  </p>
-                </button>
-              );
-            })}
+                  <span className="text-[10px] bg-[#E87722]/10 text-[#E87722] px-2 py-0.5 rounded-full font-medium">{s.caseType || "全部"}</span>
+                </div>
+                <h4 className="text-sm font-semibold text-[#051C2C]">{s.title}</h4>
+                <div className="mt-2 text-xs text-[#E87722] font-medium opacity-0 group-hover:opacity-100 transition-opacity">浏览Case →</div>
+              </button>
+            ))}
+            {/* Always show partner here too */}
+            {others.filter((s) => s.type === "partner").map((s, i) => (
+              <button key={`p${i}`} onClick={() => onSwitchPanel("partner", { initialCaseType: s.partnerCaseType })}
+                className="bg-white border border-border rounded-xl p-4 text-left hover:border-[#007680]/40 hover:shadow-sm transition-all group">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">{s.icon}</span>
+                  <span className="text-[10px] bg-[#007680]/10 text-[#007680] px-2 py-0.5 rounded-full font-medium">Partner</span>
+                </div>
+                <h4 className="text-sm font-semibold text-[#051C2C]">{s.title}</h4>
+                <p className="text-[11px] text-muted mt-1">找 {s.partnerCaseType || "Case"} 练习伙伴</p>
+                <div className="mt-2 text-xs text-[#007680] font-medium opacity-0 group-hover:opacity-100 transition-opacity">找Partner →</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ===== Section 4: BQ/PEI 行为面试 ===== */}
+      <div>
+        <h2 className="text-sm font-bold text-[#051C2C] mb-3 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#007680]" /> BQ / PEI 行为面试
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <button onClick={() => onSwitchPanel("pei")}
+            className="bg-white border border-border rounded-xl p-4 text-left hover:border-[#007680]/40 hover:shadow-sm transition-all group">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">🌟</span>
+              <span className="text-[10px] bg-[#007680]/10 text-[#007680] px-2 py-0.5 rounded-full font-medium">PEI</span>
+            </div>
+            <h4 className="text-sm font-semibold text-[#051C2C]">PEI 行为面试练习</h4>
+            <p className="text-[11px] text-muted mt-1">Why Consulting / Leadership / Failure 等高频题</p>
+            <div className="mt-2 text-xs text-[#007680] font-medium opacity-0 group-hover:opacity-100 transition-opacity">开始练习 →</div>
+          </button>
+          <button onClick={() => onSwitchPanel("sprint")}
+            className="bg-white border border-border rounded-xl p-4 text-left hover:border-[#007680]/40 hover:shadow-sm transition-all group">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">🚀</span>
+              <span className="text-[10px] bg-[#007680]/10 text-[#007680] px-2 py-0.5 rounded-full font-medium">突击</span>
+            </div>
+            <h4 className="text-sm font-semibold text-[#051C2C]">面试突击小抄</h4>
+            <p className="text-[11px] text-muted mt-1">输入公司+简历，生成专属面试准备清单</p>
+            <div className="mt-2 text-xs text-[#007680] font-medium opacity-0 group-hover:opacity-100 transition-opacity">生成小抄 →</div>
+          </button>
+        </div>
+      </div>
+
+      {/* ===== Section 5: 模拟面试 ===== */}
+      {others.some((s) => s.type === "mock") && (
+        <div>
+          <h2 className="text-sm font-bold text-[#051C2C] mb-3 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#C4071B]" /> 模拟面试
+          </h2>
+          <button onClick={() => onSwitchPanel("mock")}
+            className="w-full bg-white border border-border rounded-xl p-4 text-left hover:border-[#C4071B]/40 hover:shadow-sm transition-all group">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🎯</span>
+              <div>
+                <h4 className="text-sm font-semibold text-[#051C2C]">AI 模拟面试</h4>
+                <p className="text-[11px] text-muted mt-0.5">和AI面试官做完整Case Interview</p>
+              </div>
+              <div className="ml-auto text-xs text-[#C4071B] font-medium opacity-0 group-hover:opacity-100 transition-opacity">开始 →</div>
+            </div>
+          </button>
+        </div>
+      )}
+
+      {/* ===== Section 6: 岗位投递 ===== */}
+      {others.some((s) => s.type === "jobs") && (
+        <div>
+          <h2 className="text-sm font-bold text-[#051C2C] mb-3 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00836E]" /> 岗位投递
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {others.filter((s) => s.type === "jobs").map((s, i) => (
+              <button key={i} onClick={() => onSwitchPanel("jobs", { initialRegion: s.jobsRegion })}
+                className="bg-white border border-border rounded-xl p-4 text-left hover:border-[#00836E]/40 hover:shadow-sm transition-all group">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">{s.icon}</span>
+                  <span className="text-[10px] bg-[#00836E]/10 text-[#00836E] px-2 py-0.5 rounded-full font-medium">
+                    {s.jobsRegion === "CN" ? "国内" : s.jobsRegion || "全球"}
+                  </span>
+                </div>
+                <h4 className="text-sm font-semibold text-[#051C2C]">{s.title}</h4>
+                <div className="mt-2 text-xs text-[#00836E] font-medium opacity-0 group-hover:opacity-100 transition-opacity">查看岗位 →</div>
+              </button>
+            ))}
           </div>
         </div>
       )}
