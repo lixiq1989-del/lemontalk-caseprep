@@ -251,26 +251,53 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
             }
 
             // Extract PLAN JSON blocks
-            const planMatch = fullText.match(/\[PLAN_START\]([\s\S]*?)(\[PLAN_END\]|$)/);
-            if (planMatch) {
-              try {
-                const planJson = planMatch[1].trim();
-                // Only parse if we have a complete JSON (ends with })
-                if (planJson.endsWith("}")) {
+            const planStartPos = fullText.indexOf("[PLAN_START]");
+            const planEndPos = fullText.indexOf("[PLAN_END]");
+            if (planStartPos !== -1) {
+              setActivePanel("_plan"); // Switch to plan view immediately
+              if (planEndPos !== -1) {
+                // Complete JSON
+                const planJson = fullText.slice(planStartPos + "[PLAN_START]".length, planEndPos).trim();
+                try {
                   const parsed = JSON.parse(planJson);
                   setPlanSpec(parsed);
+                } catch {
+                  // Bad JSON
                 }
-              } catch {
-                // JSON not complete yet, wait for more tokens
+              } else {
+                // Try to parse partial JSON (might work if all sections complete)
+                const partialJson = fullText.slice(planStartPos + "[PLAN_START]".length).trim();
+                // Try adding closing brackets
+                for (const suffix of ["", "]}", "]}]}", '"}]}']) {
+                  try {
+                    const parsed = JSON.parse(partialJson + suffix);
+                    if (parsed.title && parsed.sections) {
+                      setPlanSpec(parsed);
+                      break;
+                    }
+                  } catch { /* keep trying */ }
+                }
               }
             }
 
-            // Update the AI message with text (strip markers for display)
-            const displayText = fullText
-              .replace(/\[PANEL:[^\]]+\]/g, "")
-              .replace(/\[DOC_START\][\s\S]*?(\[DOC_END\]|$)/g, "")
-              .replace(/\[PLAN_START\][\s\S]*?(\[PLAN_END\]|$)/g, "")
-              .trim();
+            // Update the AI message with text (strip ALL markers for display)
+            let displayText = fullText;
+            // Strip panel markers
+            displayText = displayText.replace(/\[PANEL:[^\]]+\]/g, "");
+            // Strip DOC blocks
+            displayText = displayText.replace(/\[DOC_START\][\s\S]*?(\[DOC_END\]|$)/g, "");
+            // Strip PLAN blocks — aggressively: from [PLAN_START] to end of text if [PLAN_END] not yet received
+            const planStartIdx = displayText.indexOf("[PLAN_START]");
+            if (planStartIdx !== -1) {
+              const planEndIdx = displayText.indexOf("[PLAN_END]");
+              if (planEndIdx !== -1) {
+                displayText = displayText.slice(0, planStartIdx) + displayText.slice(planEndIdx + "[PLAN_END]".length);
+              } else {
+                // PLAN_END not yet received — strip everything from PLAN_START onwards
+                displayText = displayText.slice(0, planStartIdx);
+              }
+            }
+            displayText = displayText.trim();
             setMessages((prev) => {
               const updated = [...prev];
               if (updated[aiMsgIndex]) {
