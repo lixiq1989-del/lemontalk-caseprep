@@ -123,8 +123,8 @@ export async function POST(req: NextRequest) {
     const prompt = CHEATSHEET_PROMPT
       .replace("{company}", company || "未知公司")
       .replace("{role}", role || "未知岗位")
-      .replace("{jd}", jd?.trim() || "（未提供详细JD）")
-      .replace("{resume_section}", resumeSection);
+      .replace("{jd}", (jd?.trim() || "（未提供详细JD）").slice(0, 3000))
+      .replace("{resume_section}", (resumeSection || "").slice(0, 3000));
 
     let response: Response;
     if (anthropicKey) {
