@@ -3,10 +3,11 @@
 import { useState, useRef, useEffect, useCallback, Suspense, lazy } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { panelBus } from "@/lib/panel-bus";
-import PlanPanel, { type PlanSpec } from "@/components/PlanPanel";
+import { type PlanSpec } from "@/components/PlanPanel";
 
 // Dynamically importable panel modules
 const PANELS: Record<string, { label: string; icon: string; component: React.LazyExoticComponent<any> }> = {
+  myplan: { label: "我的计划", icon: "🎯", component: lazy(() => import("@/components/PlanPanelWrapper")) },
   drill: { label: "每日一练", icon: "⚡", component: lazy(() => import("@/components/modules/DrillModule")) },
   casebook: { label: "Case 题库", icon: "📚", component: lazy(() => import("@/components/modules/CasebookModule")) },
   jobs: { label: "岗位信息", icon: "💼", component: lazy(() => import("@/components/modules/JobsModule")) },
@@ -71,7 +72,7 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
         const parsed = JSON.parse(saved);
         if (parsed?.title && parsed?.sections) {
           setPlanSpec(parsed);
-          setActivePanel("_plan");
+          setActivePanel("myplan");
         }
       }
     } catch {}
@@ -254,7 +255,7 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
                 setDocTitle(param || "AI 文档");
               } else if (panelKey === "plan") {
                 // [PANEL:plan:show:title] — switch to plan mode, plan JSON follows in [PLAN_START]...[PLAN_END]
-                setActivePanel("_plan");
+                setActivePanel("myplan");
               }
             }
 
@@ -268,13 +269,15 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
             const planStartPos = fullText.indexOf("[PLAN_START]");
             const planEndPos = fullText.indexOf("[PLAN_END]");
             if (planStartPos !== -1) {
-              setActivePanel("_plan"); // Switch to plan view immediately
+              setActivePanel("myplan"); // Switch to plan view immediately
               if (planEndPos !== -1) {
                 // Complete JSON
                 const planJson = fullText.slice(planStartPos + "[PLAN_START]".length, planEndPos).trim();
                 try {
                   const parsed = JSON.parse(planJson);
                   setPlanSpec(parsed);
+                  localStorage.setItem("caseprep_plan", JSON.stringify(parsed));
+                  window.dispatchEvent(new CustomEvent("plan-updated", { detail: { plan: parsed } }));
                 } catch {
                   // Bad JSON
                 }
@@ -287,6 +290,8 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
                     const parsed = JSON.parse(partialJson + suffix);
                     if (parsed.title && parsed.sections) {
                       setPlanSpec(parsed);
+                      localStorage.setItem("caseprep_plan", JSON.stringify(parsed));
+                      window.dispatchEvent(new CustomEvent("plan-updated", { detail: { plan: parsed } }));
                       break;
                     }
                   } catch { /* keep trying */ }
@@ -467,15 +472,6 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
         {/* Panel tabs (when a panel is active) */}
         {activePanel && (
           <div className="sticky top-0 z-10 bg-white border-b border-border px-4 py-2 flex items-center gap-2 overflow-x-auto">
-            {/* Back to plan button */}
-            {planSpec && activePanel !== "_plan" && (
-              <button
-                onClick={() => setActivePanel("_plan")}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap bg-[#051C2C] text-white mr-1"
-              >
-                ← 返回方案
-              </button>
-            )}
             {Object.entries(PANELS).map(([key, panel]) => (
               <button
                 key={key}
@@ -493,9 +489,7 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
 
         {/* Panel content */}
         <div className="p-4 md:p-6 max-w-4xl mx-auto">
-          {activePanel === "_plan" && planSpec ? (
-            <PlanPanel plan={planSpec} onSwitchPanel={(panel, props) => { setActivePanel(panel); setPanelProps(props || {}); }} />
-          ) : activePanel === "_doc" ? (
+          {activePanel === "_doc" ? (
             <AIDocPanel content={docContent} title={docTitle} />
           ) : ActivePanelComponent ? (
             <Suspense fallback={<div className="text-center py-20 text-muted">加载中...</div>}>
