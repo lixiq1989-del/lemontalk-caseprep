@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, Suspense, lazy } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { panelBus } from "@/lib/panel-bus";
+import PlanPanel, { type PlanSpec } from "@/components/PlanPanel";
 
 // Dynamically importable panel modules
 const PANELS: Record<string, { label: string; icon: string; component: React.LazyExoticComponent<any> }> = {
@@ -56,6 +57,7 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
   const [panelProps, setPanelProps] = useState<Record<string, any>>({});
   const [docContent, setDocContent] = useState("");
   const [docTitle, setDocTitle] = useState("");
+  const [planSpec, setPlanSpec] = useState<PlanSpec | null>(null);
   const [showChat, setShowChat] = useState(true);
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -234,22 +236,40 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
                 const [key, value] = param.split("=");
                 if (key && value) localStorage.setItem(`ai_pref_${key}`, value);
               } else if (panelKey === "doc") {
-                // [PANEL:doc:write:标题] — switch to AI document mode
                 setActivePanel("_doc");
                 setDocTitle(param || "AI 文档");
+              } else if (panelKey === "plan") {
+                // [PANEL:plan:show:title] — switch to plan mode, plan JSON follows in [PLAN_START]...[PLAN_END]
+                setActivePanel("_plan");
               }
             }
 
-            // Extract DOC content blocks: everything between [DOC_START] and [DOC_END]
+            // Extract DOC content blocks
             const docMatch = fullText.match(/\[DOC_START\]([\s\S]*?)(\[DOC_END\]|$)/);
             if (docMatch) {
               setDocContent(docMatch[1].trim());
+            }
+
+            // Extract PLAN JSON blocks
+            const planMatch = fullText.match(/\[PLAN_START\]([\s\S]*?)(\[PLAN_END\]|$)/);
+            if (planMatch) {
+              try {
+                const planJson = planMatch[1].trim();
+                // Only parse if we have a complete JSON (ends with })
+                if (planJson.endsWith("}")) {
+                  const parsed = JSON.parse(planJson);
+                  setPlanSpec(parsed);
+                }
+              } catch {
+                // JSON not complete yet, wait for more tokens
+              }
             }
 
             // Update the AI message with text (strip markers for display)
             const displayText = fullText
               .replace(/\[PANEL:[^\]]+\]/g, "")
               .replace(/\[DOC_START\][\s\S]*?(\[DOC_END\]|$)/g, "")
+              .replace(/\[PLAN_START\][\s\S]*?(\[PLAN_END\]|$)/g, "")
               .trim();
             setMessages((prev) => {
               const updated = [...prev];
@@ -423,7 +443,9 @@ export default function CoworkLayout({ children }: { children: React.ReactNode }
 
         {/* Panel content */}
         <div className="p-4 md:p-6 max-w-4xl mx-auto">
-          {activePanel === "_doc" ? (
+          {activePanel === "_plan" && planSpec ? (
+            <PlanPanel plan={planSpec} onSwitchPanel={(panel, props) => { setActivePanel(panel); setPanelProps(props || {}); }} />
+          ) : activePanel === "_doc" ? (
             <AIDocPanel content={docContent} title={docTitle} />
           ) : ActivePanelComponent ? (
             <Suspense fallback={<div className="text-center py-20 text-muted">加载中...</div>}>
